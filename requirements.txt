@@ -1,0 +1,18 @@
+# Runtime dependencies for the classifiers, the benchmark harness and the
+# Table 7 notebook. Version floors are the oldest releases the code was run
+# against; any newer 2.x / 1.x release is expected to work.
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+scikit-learn>=1.3
+torch>=2.0
+tqdm>=4.65
+matplotlib>=3.7
+
+# Optional, only needed by datasets/prepare_datasets.py to rebuild the CSV
+# files from their public sources (the shipped CSV files are enough to run
+# everything else).
+requests>=2.28
+
+# Optional, only needed to execute notebooks/table7.ipynb.
+jupyter>=1.0

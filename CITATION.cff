@@ -1,0 +1,71 @@
+cff-version: 1.2.0
+message: "If you use this software or the results it reproduces, please cite both the software and the paper."
+title: "Computational Complexity Analysis of Quantum-Inspired Pretty Good Measurement Classifiers — code and data"
+abstract: >-
+  Implementations of the copy-dependent (c-PGM), kernelized (k-PGM) and
+  symmetric-subspace-reduced (Rc-PGM) Pretty Good Measurement classifiers,
+  together with the benchmark harness, the datasets and the notebook that
+  reproduce the empirical section of the accompanying paper.
+type: software
+license: MIT
+version: 1.0.0
+date-released: "2026-08-20"
+repository-code: "<REPOSITORY-URL>"
+url: "<REPOSITORY-URL>"
+keywords:
+  - quantum-inspired machine learning
+  - pretty good measurement
+  - multi-class classification
+  - computational complexity
+  - kernel methods
+  - symmetric subspace
+authors:
+  - family-names: Cuccu
+    given-names: Carlo
+    email: c.cuccu7@studenti.unica.it
+    affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    orcid: "https://orcid.org/0000-0002-4519-1854"
+  - family-names: Sergioli
+    given-names: Giuseppe
+    email: giuseppe.sergioli@gmail.com
+    affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    orcid: "https://orcid.org/0000-0002-3650-5858"
+  - family-names: Giuntini
+    given-names: Roberto
+    email: giuntini@unica.it
+    affiliation: "Università degli Studi di Cagliari, Cagliari, Italy; Institute for Advanced Study (IAS), Technische Universität München, München, Germany"
+    orcid: "https://orcid.org/0000-0003-2078-0297"
+  - family-names: Granda Arango
+    given-names: "Andrés Camillo"
+    email: a.grandaarango@gmail.com
+    affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+  - family-names: Era
+    given-names: Riccardo
+    email: r.era@studenti.unica.it
+    affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    orcid: "https://orcid.org/0009-0004-9653-6690"
+preferred-citation:
+  type: article
+  title: "Computational Complexity Analysis of Quantum-Inspired Pretty Good Measurement Classifiers"
+  journal: "Quantum Machine Intelligence"
+  year: 2026
+  authors:
+    - family-names: Cuccu
+      given-names: Carlo
+      affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    - family-names: Sergioli
+      given-names: Giuseppe
+      affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    - family-names: Giuntini
+      given-names: Roberto
+      affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    - family-names: Granda Arango
+      given-names: "Andrés Camillo"
+      affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+    - family-names: Era
+      given-names: Riccardo
+      affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
+# TODO before publication:
+#   * replace <REPOSITORY-URL> with the public URL of the repository
+#   * add `doi:` for the archived release (e.g. Zenodo) and for the article
+#   * fill in volume / pages / article number once the paper is assigned them

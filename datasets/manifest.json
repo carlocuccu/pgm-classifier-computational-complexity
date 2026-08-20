@@ -1,0 +1,241 @@
+{
+  "_comment": [
+    "Machine-readable description of the files in this directory.",
+    "'source' identifies the public release each file is built from; 'rule' is the",
+    "transformation applied to it. 'md5'/'sha256' are the digests of the CSV file as",
+    "shipped here; 'content_sha256' is a row-order-independent digest of the same",
+    "content (SHA-256 of the tab-joined rows, each value formatted with '%.10g',",
+    "sorted lexicographically), used by prepare_datasets.py to compare a rebuilt",
+    "file against the shipped one.",
+    "All CSV files are header-less; the last column is the integer class label."
+  ],
+  "csv_format": {
+    "header": false,
+    "separator": ",",
+    "label_column": "last",
+    "label_dtype": "int, values 0..l-1"
+  },
+  "datasets": {
+    "analcatdata_dmft": {
+      "file": "analcatdata_dmft.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "analcatdata_dmft",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/analcatdata_dmft/analcatdata_dmft.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "drop_zero_feature_rows",
+      "rule_detail": "The 10 rows whose feature vector is identically zero are dropped (797 -> 787 rows). All of them carry the same, identically zero, feature vector with differing class labels.",
+      "n_rows": 787,
+      "n_features": 4,
+      "n_classes": 6,
+      "md5": "f88b41295eb5ab253b1c6616b596cb4f",
+      "sha256": "7657e562bddaf00bcb0b5e7cfe08b50586d24ce74b7680893cdc9cdd1fd66afa",
+      "content_sha256": "87b0ec1f740978e350568f08e7307d6cd3cebfe60485023fbf213b74bf165908"
+    },
+    "balance-scale": {
+      "file": "balance-scale.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "balance_scale",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/balance_scale/balance_scale.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "identity",
+      "rule_detail": "Verbatim copy of the source rows (row order differs).",
+      "n_rows": 625,
+      "n_features": 4,
+      "n_classes": 3,
+      "md5": "5f33cc3ffdec0ef717b6dc1be7ac7fa7",
+      "sha256": "9cf658909c5731aed7382597f9b1480882bd6aad551c79c1a158f78759cc5096",
+      "content_sha256": "c380d15874981f522ea0b58d3a4948945d120bfed0cdd63402103664e0a516b2"
+    },
+    "car": {
+      "file": "car.csv",
+      "source": {
+        "repository": "OpenML",
+        "name": "car",
+        "data_id": 21,
+        "url": "https://www.openml.org/d/21",
+        "licence": "CC BY 4.0"
+      },
+      "rule": "label_rank_encode_and_drop_rows",
+      "rule_detail": "Every column (the six nominal features and the class) is replaced by the rank of its value in the ascending lexicographic order of the distinct labels of that column, e.g. buying: high->0, low->1, med->2, vhigh->3 and class: acc->0, good->1, unacc->2, vgood->3. The single row encoding to (0,0,0,0,0,0) with label 2 is dropped (1728 -> 1727 rows); it is the only row of the file whose feature vector is identically zero.",
+      "column_labels": {
+        "buying": ["high", "low", "med", "vhigh"],
+        "maint": ["high", "low", "med", "vhigh"],
+        "doors": ["2", "3", "4", "5more"],
+        "persons": ["2", "4", "more"],
+        "lug_boot": ["big", "med", "small"],
+        "safety": ["high", "low", "med"],
+        "class": ["acc", "good", "unacc", "vgood"]
+      },
+      "dropped_rows": [[0, 0, 0, 0, 0, 0, 2]],
+      "n_rows": 1727,
+      "n_features": 6,
+      "n_classes": 4,
+      "md5": "97bf85b5072577e87a02cacb66c8eb9a",
+      "sha256": "53247ba06a74d3e4be76fc184fe1282ac4eeaddbc8938d62bcd41393625154a2",
+      "content_sha256": "84f8af219178156cd1e6e1dfbbf0f0843ae653d9fab1243efe3eaf61d762ec73"
+    },
+    "cleveland-nominal": {
+      "file": "cleveland-nominal.csv",
+      "source": {
+        "repository": "OpenML",
+        "name": "cleveland-nominal",
+        "data_id": 40711,
+        "url": "https://www.openml.org/d/40711",
+        "licence": "CC BY 4.0"
+      },
+      "rule": "restore_one_based_codes",
+      "rule_detail": "Columns in order: sex, cp, fbs, restecg, exang, slope, ca, class. The OpenML release stores every nominal attribute as a 0-based category index; the columns 'cp' and 'slope' are shifted back to the 1-based coding of the original Cleveland database (cp in 1..4, slope in 1..3). All other columns and the class column are copied verbatim.",
+      "columns": ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "class"],
+      "shift_plus_one": ["cp", "slope"],
+      "n_rows": 303,
+      "n_features": 7,
+      "n_classes": 5,
+      "md5": "1e99b951f3537a5f0bfa1a6815c675ee",
+      "sha256": "e942973e80c9d1715fdb15c3aadfcb46bcaeedd39f106a168f3e790d4908fd85",
+      "content_sha256": "5139e308619fd636d01c5a55f4f25827170be9237f28540ceea1d23341de5c5e"
+    },
+    "cloud": {
+      "file": "cloud.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "cloud",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/cloud/cloud.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "identity",
+      "rule_detail": "Verbatim copy of the source rows (row order differs).",
+      "n_rows": 108,
+      "n_features": 7,
+      "n_classes": 4,
+      "md5": "6bcffdfbed79a79e70a16e66dd217430",
+      "sha256": "d03ab81f7b789d40ebce609516c2414a8dd876757e6b95eb492c065ed96bb2c3",
+      "content_sha256": "91bea7a07750b03a592be37dfdf2569d413b6a29adde65a3e8fc67b9c1c98f8c"
+    },
+    "confidence": {
+      "file": "confidence.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "confidence",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/confidence/confidence.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "identity",
+      "rule_detail": "Verbatim copy of the source rows (row order differs).",
+      "n_rows": 72,
+      "n_features": 3,
+      "n_classes": 6,
+      "md5": "a208a47427e686367e02f9032a680a79",
+      "sha256": "de19d6852644c51ce8618c24c51ad7ba08705d1f1a1d1eab7747271b9cd7e96f",
+      "content_sha256": "778bd53ab4b168877634ece9b0230b1cef2c2ce3956865b5562abd09fef0d38b"
+    },
+    "ecoli": {
+      "file": "ecoli.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "ecoli",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/ecoli/ecoli.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "relabel",
+      "rule_detail": "Feature columns copied verbatim; the class column is relabelled to consecutive integers 0..4 through 'label_map'.",
+      "label_map": {"0": 0, "1": 1, "4": 2, "5": 3, "7": 4},
+      "n_rows": 327,
+      "n_features": 7,
+      "n_classes": 5,
+      "md5": "e2d1f30ef256664f51882edb65517ae1",
+      "sha256": "de5e79ed372fa5bfb68d5c3dd345b9a45f0fce5162a3d1ac5ba96a254274c331",
+      "content_sha256": "b83811f42d068a1a16dadcdc35695ffc94f2f524b69057eae71a5e4dce2a39b9"
+    },
+    "haberman": {
+      "file": "haberman.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "haberman",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/haberman/haberman.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "relabel",
+      "rule_detail": "Feature columns copied verbatim; the class column is relabelled from {1,2} to {0,1}.",
+      "label_map": {"1": 0, "2": 1},
+      "n_rows": 306,
+      "n_features": 3,
+      "n_classes": 2,
+      "md5": "2536765265b0a7098c255bfb21838a74",
+      "sha256": "381181bdd266ffe4d275e6fc622a30561eb38673d3a1bff9e581d52b6519a38b",
+      "content_sha256": "0c3d1f3c56d44afcee421d68eed98cc5a0d288d333bc8eb7cae06d189b9b9947"
+    },
+    "iris": {
+      "file": "iris.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "iris",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/iris/iris.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "identity",
+      "rule_detail": "Verbatim copy of the source rows (row order differs).",
+      "n_rows": 150,
+      "n_features": 4,
+      "n_classes": 3,
+      "md5": "e84cb3fd6f5c33a17c004010328dd158",
+      "sha256": "00772f5609aaa4e42f4842fb5379e0c9a227b8f1bda52cd66cf5b0a492b553fb",
+      "content_sha256": "1039fbfe1ba1a986dd138a6bf5e6f79cf746641be4f7ad820fbe85a584f888f9"
+    },
+    "led7": {
+      "file": "led7.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "led7",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/led7/led7.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "identity",
+      "rule_detail": "Verbatim copy of the source rows (row order differs).",
+      "n_rows": 3200,
+      "n_features": 7,
+      "n_classes": 10,
+      "md5": "c359e41fec1df6831c2b0de34f3f23b6",
+      "sha256": "4ebd85d45f4eb4e17ef6fbce868c202243599fd138b2fd4370cdd59f800d6c29",
+      "content_sha256": "3c7df48735248317607ce3fc5670afa0f97aa23d1edb9d60f6eef26e9310ffbd"
+    },
+    "new-thyroid": {
+      "file": "new-thyroid.csv",
+      "source": {
+        "repository": "PMLB",
+        "name": "new_thyroid",
+        "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/new_thyroid/new_thyroid.tsv.gz",
+        "licence": "MIT"
+      },
+      "rule": "relabel",
+      "rule_detail": "Feature columns copied verbatim; the class column is relabelled from {1,2,3} to {0,1,2}.",
+      "label_map": {"1": 0, "2": 1, "3": 2},
+      "n_rows": 215,
+      "n_features": 5,
+      "n_classes": 3,
+      "md5": "eddcbb606349436fe306ee46e5d93fb7",
+      "sha256": "b1cce1c6594dc58b5509c027480806be8d24c1adc2e4ecccb9b8167f633c28b3",
+      "content_sha256": "3d3bef03fac5eab192c6d9375e1c495207883f8ef50f024681ea3466449a79af"
+    }
+  },
+  "not_redistributed": {
+    "skin_segmentation": {
+      "file": "Skin_NonSkin.txt",
+      "source": {
+        "repository": "UCI Machine Learning Repository",
+        "name": "Skin Segmentation",
+        "data_id": 229,
+        "url": "https://archive.ics.uci.edu/static/public/229/skin+segmentation.zip",
+        "licence": "CC BY 4.0"
+      },
+      "reason": "Size (245057 rows); fetched on demand by download_skin_segmentation.py.",
+      "n_rows": 245057,
+      "n_features": 3,
+      "n_classes": 2,
+      "format": "tab-separated, header-less, last column = class label in {1,2}"
+    }
+  }
+}
