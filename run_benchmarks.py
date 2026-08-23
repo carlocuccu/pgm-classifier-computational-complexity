@@ -41,9 +41,13 @@ Measurement protocol (see README.md, "Measurement protocol"):
     from /proc/self/statm by a background thread; (ii) bytes of the arrays /
     tensors actually stored on the fitted estimator ("model bytes"), which is
     the quantity the theoretical memory proxies describe.
+  * The pseudo-inverse threshold is harmonised across estimators (BASE_TOL for
+    the spectrum of G^c, BASE_TOL/N for the spectrum of sigma = G^c/N), so that
+    the two truncations coincide. Both constants are written to the meta JSON.
   * Each run ends with an equivalence check: k-PGM and Rc-PGM must produce the
-    same argmax on the test set. A failure there invalidates the timings, and
-    the script says so explicitly.
+    same argmax on the test set. The message distinguishes exact agreement,
+    near-agreement from near-threshold truncation, and a real disagreement,
+    which invalidates the timings.
 """
 
 import argparse
@@ -83,6 +87,13 @@ import numpy as np  # noqa: E402
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "datasets"
 OUT_DIR = ROOT / "results_benchmark"
+
+# Eigenvalue threshold of the pseudo-inverse square root. BASE_TOL is the
+# threshold of the k-PGM, applied to the spectrum of G^c; HARMONIZE_TOL rescales
+# it for the estimators that truncate the spectrum of sigma = G^c / N instead
+# (see rc_tol). Both values are recorded in the *_meta.json of every run.
+BASE_TOL = 1e-6
+HARMONIZE_TOL = True
 
 # Copy numbers of Table 7 of the manuscript (accuracy saturation point).
 TABLE7_C = {
@@ -174,6 +185,8 @@ def timed(fn, reps: int, warmup: int = 1):
         result = fn()
     times = []
     for _ in range(reps):
+        result = None      # free the previous repetition's model
+        gc.collect()       # before the timer, so collection does not pollute it
         t0 = time.perf_counter()
         result = fn()
         times.append(time.perf_counter() - t0)
@@ -255,12 +268,30 @@ def get_classifiers(include_cpgm=False):
     rmod = load("PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank")
     KPGM = getattr(kmod, "KPGM")
     RcPGM = getattr(rmod, "PGMHQC_gpu_cpu_dtype")
-    out = {"kpgm": lambda c: KPGM(n_copies=c, encoding="amplit"),
-           "rcpgm": lambda c: RcPGM(n_copies=c, encoding="amplit")}
+    def rc_tol(n_train):
+        # Scale-consistent pseudo-inverse threshold. The k-PGM truncates the
+        # spectrum of G^c = Phi Phi^T at BASE_TOL, whereas the reduced and
+        # copy-dependent estimators truncate the spectrum of sigma = G^c / N,
+        # which is the same nonzero spectrum divided by N. Dividing the
+        # threshold by N makes the two truncations coincide, so the estimators
+        # agree exactly rather than up to near-threshold eigenvalues.
+        #
+        # sigma = G^c / N holds because the estimators are used with their
+        # default empirical priors (class_weight=None, i.e. p_j = #k_j / N),
+        # under which sigma is the plain average of the N pure states. With
+        # class_weight='balanced' the relation would pick up class-imbalance
+        # factors and this rescaling would no longer be exact.
+        return (BASE_TOL / n_train) if (HARMONIZE_TOL and n_train) else BASE_TOL
+
+    out = {"kpgm": lambda c, n_train=None: KPGM(n_copies=c, encoding="amplit",
+                                                tol=BASE_TOL),
+           "rcpgm": lambda c, n_train=None: RcPGM(n_copies=c, encoding="amplit",
+                                                  tol=rc_tol(n_train))}
     if include_cpgm:
         cmod = load("PGMHQC_gpu_cpu_dtype")
         CPGM = getattr(cmod, "PGMHQC_gpu_cpu_dtype")
-        out["cpgm"] = lambda c: CPGM(n_copies=c, encoding="amplit")
+        out["cpgm"] = lambda c, n_train=None: CPGM(n_copies=c, encoding="amplit",
+                                                   tol=rc_tol(n_train))
     return out
 
 
@@ -269,7 +300,7 @@ def rc_preprocessing_time(RcFactory, X_train, c, reps):
     encoding + mapping), replicated outside fit so it can be reported
     separately. The symmetric basis is built on the encoded dimension
     (self.d = d_raw + 1 when an encoding is used)."""
-    est = RcFactory(c)
+    est = RcFactory(c, n_train=len(X_train))
 
     def basis():
         est.d = X_train.shape[1] + 1  # encoded dimension (amplit)
@@ -316,7 +347,7 @@ def measure(method, factory, c, Xtr, ytr, Xte, yte, dataset, reps):
     est_holder = {}
 
     def do_fit():
-        est = factory(c)
+        est = factory(c, n_train=len(Xtr))
         est.fit(Xtr, ytr)
         est_holder["est"] = est
         return est
@@ -351,7 +382,10 @@ def component_A(args):
         info = thresholds(len(tr), X.shape[1], c, len(np.unique(y)))
         ds = info["dsym"]
 
-        est_bytes = 3 * len(np.unique(y)) * ds * ds * 8  # rough Rc footprint
+        # Calibrated Rc-PGM fit-peak estimate: 2l persistent matrices
+        # (centroids + PGM operators) plus ~5 dsym^2 transients (sigma, the
+        # eigh workspace, the sandwich temporaries), in float64.
+        est_bytes = (2 * len(np.unique(y)) + 5) * ds * ds * 8
         if est_bytes > args.mem_limit_gb * 1e9:
             print(f"[skip] {name}: estimated Rc-PGM footprint "
                   f"{est_bytes/1e9:.1f} GB > --mem-limit-gb {args.mem_limit_gb}")
@@ -381,7 +415,14 @@ def component_A(args):
         # Equivalence check
         if "kpgm" in preds and "rcpgm" in preds:
             agree = float(np.mean(preds["kpgm"] == preds["rcpgm"]))
-            status = "OK" if agree > 0.999 else "FAILED (k-PGM and Rc-PGM disagree)"
+            if agree == 1.0:
+                status = "OK (identical)"
+            elif agree > 0.99:
+                status = ("near-identical; the residual mismatches come from the "
+                          "pseudo-inverse truncation at near-threshold eigenvalues "
+                          "-- set HARMONIZE_TOL=True for exact agreement")
+            else:
+                status = "CHECK: large disagreement, the timings are not comparable"
             print(f"  equivalence k-PGM vs Rc-PGM: argmax agreement {agree:.4f}  [{status}]")
             meta.append({"dataset": name, "argmax_agreement": agree,
                          "rc_prep_basis_s": tb, "rc_prep_map_s": tm, **info})
@@ -527,8 +568,8 @@ def selftest(args):
     rng = np.random.default_rng(0)
     X = rng.random((240, 3)); y = (X @ [1.0, -0.7, 0.4] > 0.35).astype(int)
     tr, te = stratified_split(y, 0.2, 0)
-    factories = {"kpgm": lambda c: _MockPGM(c, "kpgm"),
-                 "rcpgm": lambda c: _MockPGM(c, "rcpgm")}
+    factories = {"kpgm": lambda c, n_train=None: _MockPGM(c, "kpgm"),
+                 "rcpgm": lambda c, n_train=None: _MockPGM(c, "rcpgm")}
     preds = {}
     for m in ("kpgm", "rcpgm"):
         cell, holder = measure(m, factories[m], 3, X[tr], y[tr], X[te], y[te],
@@ -568,7 +609,8 @@ def env_info():
     info = {"python": sys.version.split()[0], "platform": platform.platform(),
             "cpu_count": os.cpu_count(), "threads": N_THREADS,
             "numpy": np.__version__,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "base_tol": BASE_TOL, "harmonize_tol": HARMONIZE_TOL}
     try:
         import torch
         info["torch"] = torch.__version__

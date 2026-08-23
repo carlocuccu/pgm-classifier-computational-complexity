@@ -81,7 +81,14 @@ different in the two families:
   Table 7.
 - **Retained rank.** The k-PGM keeps the eigenvectors of `G^c` whose eigenvalue
   exceeds `tol = 1e-6`; their number is `r_G`, available after `fit` as
-  `model.lam_inv_sqrt.shape[0]`.
+  `model.lam_inv_sqrt.shape[0]`. The c-PGM and the Rc-PGM apply their own `tol`
+  to the spectrum of `σ = G^c / N` instead, so the same numerical truncation
+  corresponds to a threshold `N` times smaller; `run_benchmarks.py` rescales it
+  accordingly (see below).
+
+Both estimators are used with their default empirical priors
+(`class_weight=None`, `p_j = #k_j / N`), which is the convention Table 7
+reports and the one under which `σ = G^c / N`.
 
 ## The advantage conditions
 
@@ -114,9 +121,16 @@ only comparable across runs that share it:
   size of the arrays and tensors the fitted estimator actually holds. The
   second is the quantity the theoretical memory bounds describe; the first
   includes the allocator's behaviour.
+- **Harmonised truncation threshold**: `BASE_TOL = 1e-6` is applied to the
+  spectrum of `G^c` for the k-PGM, and `BASE_TOL / N` to the spectrum of
+  `σ = G^c / N` for the c-PGM and the Rc-PGM, so that the two pseudo-inverses
+  discard the same eigendirections. Set `HARMONIZE_TOL = False` to disable the
+  rescaling; both constants are written to `*_meta.json`.
 - **Equivalence check**: every run ends by verifying that the k-PGM and the
-  Rc-PGM produce the same argmax on the test set. If they do not, the timings
-  are meaningless and the script says so.
+  Rc-PGM produce the same argmax on the test set. The message distinguishes
+  three outcomes: exact agreement; near-agreement, whose residual mismatches
+  come from eigenvalues sitting at the truncation threshold; and a real
+  disagreement, which makes the timings incomparable.
 - `results_benchmark/*_meta.json` records the environment of the run. Copy it
   into `docs/environment.md` when reporting results.
 
