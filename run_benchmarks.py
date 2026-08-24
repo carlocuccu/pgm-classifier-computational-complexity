@@ -237,18 +237,20 @@ def stratified_subsample(y, n, seed):
     return np.array(sorted(out))
 
 
-def load_dataset(name: str, minmax: bool = True):
-    """CSV with the class label in the LAST column; Skin file is TSV."""
+def load_dataset(name: str):
+    """CSV with the class label in the LAST column; Skin file is TSV.
+
+    The features are used exactly as stored, with no scaling: this is what the
+    Table 7 notebook does, and the amplitude encoding of the estimators
+    normalises every sample to the unit sphere anyway. Together with the split
+    of `stratified_split`, it makes the benchmarks fit the very same models the
+    table describes, down to the reported accuracies.
+    """
     if name == "skin":
         raw = np.loadtxt(DATA_DIR / SKIN_FILE, delimiter="\t")
     else:
         raw = np.loadtxt(DATA_DIR / f"{name}.csv", delimiter=",")
-    X, y = raw[:, :-1].astype(np.float64), raw[:, -1]
-    if minmax:
-        lo, hi = X.min(axis=0), X.max(axis=0)
-        span = np.where(hi > lo, hi - lo, 1.0)
-        X = (X - lo) / span
-    return X, y
+    return raw[:, :-1].astype(np.float64), raw[:, -1]
 
 
 def dsym_of(d_raw: int, c: int, encoded: bool = True) -> int:

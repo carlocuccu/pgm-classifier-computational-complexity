@@ -112,10 +112,14 @@ recomputes for every dataset.
 The benchmark harness follows a fixed protocol, and the numbers it reports are
 only comparable across runs that share it:
 
-- **Split**: the train/test partition is the one of Table 7 --
+- **Inputs**: the features are read from the CSV files as stored, with no
+  scaling, and the train/test partition is the one of Table 7 -- so Component A
+  fits the very same models the table describes and reproduces its accuracies
+  exactly, adding only the measurements.
+- **Split**: the partition is produced by
   `train_test_split(..., test_size=0.2, shuffle=True, stratify=y,
-  random_state=42)` -- so the training-set sizes `N` reported by the harness
-  coincide with the tabulated ones.
+  random_state=42)`, so the training-set sizes `N` coincide with the tabulated
+  ones.
 - **Threads are pinned before numpy/torch are imported** — `--threads` (default
   `1`) sets `OMP_NUM_THREADS` and its siblings. Report the value together with
   the results.
