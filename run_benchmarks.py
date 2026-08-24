@@ -195,14 +195,34 @@ def timed(fn, reps: int, warmup: int = 1):
 
 
 def stratified_split(y, test_frac=0.2, seed=42):
-    rng = np.random.default_rng(seed)
-    tr, te = [], []
-    for cls in np.unique(y):
-        idx = np.flatnonzero(y == cls)
-        rng.shuffle(idx)
-        k = max(1, int(round(len(idx) * test_frac)))
-        te.extend(idx[:k]); tr.extend(idx[k:])
-    return np.array(sorted(tr)), np.array(sorted(te))
+    """Stratified train/test split, identical to the one of the Table 7 notebook.
+
+    `sklearn.model_selection.train_test_split(..., shuffle=True, stratify=y,
+    random_state=seed)` is used so that the training-set sizes N reported by the
+    benchmarks coincide with those of Table 7; the partition depends only on `y`
+    and on the seed, so splitting the index array reproduces the notebook's
+    split of the data frame exactly.
+
+    A numpy fallback keeps `selftest` runnable in an environment without
+    scikit-learn; it rounds per class and can therefore differ by a unit or two
+    in N, so it must not be used for reported runs.
+    """
+    index = np.arange(len(y))
+    try:
+        from sklearn.model_selection import train_test_split
+    except ImportError:
+        rng = np.random.default_rng(seed)
+        tr, te = [], []
+        for cls in np.unique(y):
+            idx = np.flatnonzero(y == cls)
+            rng.shuffle(idx)
+            k = max(1, int(round(len(idx) * test_frac)))
+            te.extend(idx[:k]); tr.extend(idx[k:])
+        return np.array(sorted(tr)), np.array(sorted(te))
+
+    tr, te = train_test_split(index, test_size=test_frac, shuffle=True,
+                              stratify=y, random_state=seed)
+    return np.sort(tr), np.sort(te)
 
 
 def stratified_subsample(y, n, seed):

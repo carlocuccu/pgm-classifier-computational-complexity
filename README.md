@@ -51,6 +51,7 @@ pgm-repo/
 │   ├── KPGMC_Low_Rank.py                           k-PGM     (qunica.KPGM)
 │   └── PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank.py    Rc-PGM    (qunica.RcPGM)
 ├── run_benchmarks.py         empirical benchmark harness (Components A, B, selftest)
+├── scripts/paper_numbers.py  derives every figure quoted in the paper from a run
 ├── notebooks/table7.ipynb    regenerates Table 7
 ├── datasets/                 the 11 CSV files, their manifest and preparation scripts
 ├── figures/                  the three figures of the paper
@@ -111,6 +112,10 @@ recomputes for every dataset.
 The benchmark harness follows a fixed protocol, and the numbers it reports are
 only comparable across runs that share it:
 
+- **Split**: the train/test partition is the one of Table 7 --
+  `train_test_split(..., test_size=0.2, shuffle=True, stratify=y,
+  random_state=42)` -- so the training-set sizes `N` reported by the harness
+  coincide with the tabulated ones.
 - **Threads are pinned before numpy/torch are imported** — `--threads` (default
   `1`) sets `OMP_NUM_THREADS` and its siblings. Report the value together with
   the results.
