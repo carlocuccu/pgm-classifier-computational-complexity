@@ -13,7 +13,7 @@ Measurement:
 |---|---|---|
 | **c-PGM** | explicit tensor copies of the encoded sample | `d^c` |
 | **k-PGM** | the kernel trick replaces the tensor power by the entrywise `c`-th power of the Gram matrix | `N`, `r_G` |
-| **Rc-PGM** | the c-PGM restricted to the symmetric subspace | `d_sym = C(d̃ + c - 1, c)` |
+| **Rc-PGM** | the c-PGM restricted to the symmetric subspace | `d_sym = C(d + c - 1, c)` |
 
 The three are equivalent as classifiers and differ only in their computational
 profile. This repository contains the implementations, the analytic-condition
@@ -74,11 +74,12 @@ y_pred = model.predict(X_test)
 Two conventions matter throughout, and are the reason the same `c` can look
 different in the two families:
 
-- **Encoded dimension.** `encoding="amplit"` appends one component to each
-  vector before ℓ₂-normalisation, so the space the classifier really works in
-  has dimension `d̃ = d + 1`. The symmetric basis of the Rc-PGM and every
-  occurrence of `d_sym` in the advantage conditions are built on `d̃`, not on
-  the raw `d`. With this convention `r_G ≤ min(N, d_sym)` holds in every row of
+- **Encoded dimension.** Throughout the paper and here, `d` is the dimension of
+  the *encoded* space — the one the classifier works in — not the number of raw
+  features. `encoding="amplit"` appends one component to each vector before
+  ℓ₂-normalisation, so a dataset with `p` raw features gives `d = p + 1`. The
+  symmetric basis of the Rc-PGM and every occurrence of `d_sym` are built on
+  that `d`; with this convention `r_G ≤ min(N, d_sym)` holds in every row of
   Table 7.
 - **Retained rank.** The k-PGM keeps the eigenvectors of `G^c` whose eigenvalue
   exceeds `tol = 1e-6`; their number is `r_G`, available after `fit` as
@@ -93,16 +94,16 @@ reports and the one under which `σ = G^c / N`.
 
 ## The advantage conditions
 
-For a dataset with `N` training samples, `l` classes, encoded dimension `d̃` and
+For a dataset with `N` training samples, `l` classes, encoded dimension `d` and
 retained Gram rank `r_G`, the Rc-PGM is preferable to the k-PGM when
 
 | resource | condition |
 |---|---|
 | training time | `N > l^(1/3) · d_sym` |
 | training memory | `N > d_sym²` |
-| prediction time **and** memory | `N > l · d_sym² / (d̃ + r_G)` |
+| prediction time **and** memory | `N > l · d_sym² / (d + r_G)` |
 
-The full prediction cost of the k-PGM is `O(N(d̃ + r_G))` in both time and
+The full prediction cost of the k-PGM is `O(N(d + r_G))` in both time and
 memory, so a single threshold governs the two prediction metrics. These are the
 inequalities evaluated in Table 7, and the ones `notebooks/table7.ipynb`
 recomputes for every dataset.

@@ -1,6 +1,6 @@
 # Figures
 
-The three figures of the manuscript, as PNG and as PDF. They are plots of the
+The three *analytic* figures of the manuscript, as PNG and as PDF. They are plots of the
 closed-form complexity expressions derived in the paper — no data and no
 measurement enter them — and were produced with Wolfram Mathematica. The exact
 expressions are listed below, so that each surface can be re-derived
@@ -58,9 +58,26 @@ unreduced c-PGM does not.
 
 ## Note on the encoded dimension
 
-These figures are plotted in terms of the dimension `d` of the space the
-classifier operates in. In the experiments of Table 7 the amplitude encoding
-appends one component to each vector before ℓ₂-normalisation, so that dimension
-is `d̃ = d_raw + 1` and `d_sym = binomial(d̃ + c - 1, c)`. The figures are
-unaffected — they sweep `d` — but the substitution matters when reading the
-table against them.
+As everywhere in the paper, `d` is the dimension of the *encoded* space, the one
+the classifier operates in — not the number of raw features of a dataset. The
+amplitude encoding used in the experiments appends one component to each vector
+before ℓ₂-normalisation, so for a dataset with `p` raw features these plots are
+read at `d = p + 1`.
+
+## The fourth figure
+
+The manuscript also contains a figure that is not analytic: the crossover sweep
+on Skin Segmentation. It is data-derived and therefore not kept here — the
+benchmark harness writes it, as PNG and as PDF, next to the measurements it
+plots:
+
+```bash
+python run_benchmarks.py B --reps 3
+# -> results_benchmark/componentB_crossover.{png,pdf}
+```
+
+Its three panels compare the k-PGM and the Rc-PGM on training time, stored
+model memory and prediction time, each against the threshold of the condition
+that governs it. Note that the stored model is bounded by the *prediction*
+condition `N > l·d_sym²/(d + r_G)`, not by the training-memory one: the memory a
+fitted k-PGM retains is the `O(N(d + r_G))` term that drives its prediction cost.

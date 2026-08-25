@@ -503,29 +503,52 @@ def plot_B(rows, info):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    # TrueType rather than Type 3 in the PDF: most publishers require it.
+    matplotlib.rcParams["pdf.fonttype"] = 42
+    matplotlib.rcParams["ps.fonttype"] = 42
+
     def series(method, attr):
         pts = sorted([(r.N, getattr(r, attr)) for r in rows if r.method == method])
         return [p[0] for p in pts], [p[1] for p in pts]
 
-    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4))
+    def crossing(attr):
+        """First N at which the k-PGM curve rises above the Rc-PGM one."""
+        xs, yk = series("kpgm", attr)
+        _, yr = series("rcpgm", attr)
+        diff = [math.log(a) - math.log(b) for a, b in zip(yk, yr)]
+        for i in range(len(xs) - 1):
+            if diff[i] < 0 <= diff[i + 1]:
+                t = -diff[i] / (diff[i + 1] - diff[i])
+                return math.exp(math.log(xs[i]) + t * (math.log(xs[i + 1]) - math.log(xs[i])))
+        return None
+
+    # The stored model of the k-PGM is the O(N (d + r_G)) term that governs its
+    # PREDICTION cost, so the middle panel is compared with the prediction
+    # threshold, not with the training-memory one.
     panels = [("fit_mean", "training time [s]", info["tr_time_thr"]),
-              ("model_bytes", "model memory [bytes]", info["tr_mem_thr"]),
+              ("model_bytes", "stored model memory [bytes]", info["pred_thr"]),
               ("pred_mean", "prediction time [s]", info["pred_thr"])]
+
+    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4))
     for ax, (attr, label, thr) in zip(axes, panels):
-        for method, color in (("kpgm", "#C00000"), ("rcpgm", "#1E7B34")):
+        for method, name, color in (("kpgm", "k-PGM", "#C00000"),
+                                    ("rcpgm", "Rc-PGM", "#1E7B34")):
             xs, ys = series(method, attr)
-            ax.plot(xs, ys, "o-", color=color, label=method)
+            ax.plot(xs, ys, "o-", color=color, label=name)
         ax.axvline(thr, color="#1F4E79", ls="--", lw=1,
-                   label=f"theoretical N*≈{thr:.0f}")
+                   label=f"theoretical N*$\\approx${thr:.0f}")
+        emp = crossing(attr)
+        if emp is not None:
+            ax.axvline(emp, color="#1F4E79", ls=":", lw=1.2,
+                       label=f"empirical N$\\approx${emp:.0f}")
         ax.set_xscale("log"); ax.set_yscale("log")
         ax.set_xlabel("N (training samples)"); ax.set_ylabel(label)
         ax.legend(fontsize=8); ax.grid(alpha=0.3)
-    fig.suptitle("Component B — Skin segmentation, c = %d (dsym = %d)"
-                 % (SKIN_C, info["dsym"]))
     fig.tight_layout()
-    out = OUT_DIR / "componentB_crossover.png"
-    fig.savefig(out, dpi=160)
-    print(f"[B] figure -> {out}")
+    for ext in ("png", "pdf"):
+        out = OUT_DIR / f"componentB_crossover.{ext}"
+        fig.savefig(out, dpi=160)
+        print(f"[B] figure -> {out}")
 
 
 # ----------------------------------------------------------------------------
