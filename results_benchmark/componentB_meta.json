@@ -1,0 +1,29 @@
+{
+  "env": {
+    "python": "3.10.12",
+    "platform": "Linux-6.8.0-111-generic-x86_64-with-glibc2.35",
+    "cpu_count": 64,
+    "threads": 1,
+    "numpy": "1.26.4",
+    "timestamp": "2026-08-25 08:27:39",
+    "base_tol": 1e-06,
+    "harmonize_tol": true,
+    "torch": "1.13.1+cu117"
+  },
+  "thresholds": {
+    "dsym": 56,
+    "tr_time_thr": 70.5555787941129,
+    "tr_mem_thr": 3136,
+    "pred_thr": 104.53333333333333
+  },
+  "grid": [
+    250,
+    500,
+    1000,
+    1750,
+    3000,
+    5000,
+    8000
+  ],
+  "test_size": 2000
+}

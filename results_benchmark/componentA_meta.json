@@ -1,0 +1,75 @@
+{
+  "env": {
+    "python": "3.10.12",
+    "platform": "Linux-6.8.0-111-generic-x86_64-with-glibc2.35",
+    "cpu_count": 64,
+    "threads": 1,
+    "numpy": "1.26.4",
+    "timestamp": "2026-08-24 19:16:08",
+    "base_tol": 1e-06,
+    "harmonize_tol": true,
+    "torch": "1.13.1+cu117"
+  },
+  "meta": [
+    {
+      "dataset": "balance-scale",
+      "argmax_agreement": 1.0,
+      "rc_prep_basis_s": 0.00012482330203056335,
+      "rc_prep_map_s": 0.0006804317235946655,
+      "dsym": 5,
+      "tr_time_thr": 7.211247851537042,
+      "tr_mem_thr": 25,
+      "pred_thr": 7.5
+    },
+    {
+      "dataset": "haberman",
+      "argmax_agreement": 1.0,
+      "rc_prep_basis_s": 0.0001119416207075119,
+      "rc_prep_map_s": 0.0005702972412109375,
+      "dsym": 4,
+      "tr_time_thr": 5.039684199579493,
+      "tr_mem_thr": 16,
+      "pred_thr": 4.0
+    },
+    {
+      "dataset": "iris",
+      "argmax_agreement": 1.0,
+      "rc_prep_basis_s": 0.00021051988005638123,
+      "rc_prep_map_s": 0.0011733226478099824,
+      "dsym": 15,
+      "tr_time_thr": 21.633743554611126,
+      "tr_mem_thr": 225,
+      "pred_thr": 33.75
+    },
+    {
+      "dataset": "led7",
+      "argmax_agreement": 1.0,
+      "rc_prep_basis_s": 0.0031389318406581878,
+      "rc_prep_map_s": 0.04248826690018177,
+      "dsym": 330,
+      "tr_time_thr": 710.9634477105217,
+      "tr_mem_thr": 108900,
+      "pred_thr": 3221.8934911242604
+    },
+    {
+      "dataset": "ecoli",
+      "argmax_agreement": 1.0,
+      "rc_prep_basis_s": 0.0578752551227808,
+      "rc_prep_map_s": 0.5906429089605808,
+      "dsym": 6435,
+      "tr_time_thr": 11003.695216864544,
+      "tr_mem_thr": 41409225,
+      "pred_thr": 769688.1970260224
+    },
+    {
+      "dataset": "car",
+      "argmax_agreement": 1.0,
+      "rc_prep_basis_s": 0.045483150705695155,
+      "rc_prep_map_s": 0.7814769972115755,
+      "dsym": 5005,
+      "tr_time_thr": 7944.942265100838,
+      "tr_mem_thr": 25050025,
+      "pred_thr": 72190.27377521613
+    }
+  ]
+}

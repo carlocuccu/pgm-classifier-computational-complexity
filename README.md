@@ -41,6 +41,7 @@ checks and the harness self-test run without it.
 | **Section "Some empirical evidence"**, per-dataset timings | `python run_benchmarks.py A --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
 | **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `python datasets/download_skin_segmentation.py`<br>`python run_benchmarks.py B --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
+| **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `python scripts/paper_numbers.py` re-derives every figure quoted in the text |
 
 ## Layout
 
@@ -54,6 +55,7 @@ pgm-repo/
 ├── scripts/paper_numbers.py  derives every figure quoted in the paper from a run
 ├── notebooks/table7.ipynb    regenerates Table 7
 ├── datasets/                 the 11 CSV files, their manifest and preparation scripts
+├── results_benchmark/        the measurements reported in the paper, as produced
 ├── figures/                  the three figures of the paper
 └── docs/environment.md       where to record the machine the results were produced on
 ```
@@ -143,6 +145,9 @@ only comparable across runs that share it:
   disagreement, which makes the timings incomparable.
 - `results_benchmark/*_meta.json` records the environment of the run. Copy it
   into `docs/environment.md` when reporting results.
+- **The reported runs are committed** under `results_benchmark/`, together with
+  a note on how they were produced. The harness writes into that same
+  directory, so a re-run overwrites them: check `git status` before committing.
 
 ## Datasets
 
