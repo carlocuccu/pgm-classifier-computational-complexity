@@ -1,11 +1,12 @@
 cff-version: 1.2.0
 message: "If you use this software or the results it reproduces, please cite both the software and the paper."
-title: "Computational Complexity Analysis of Quantum-Inspired Pretty Good Measurement Classifiers — code and data"
+title: "Computational Complexity Analysis of Quantum-Inspired Pretty Good Measurement Classifiers — code"
 abstract: >-
   Implementations of the copy-dependent (c-PGM), kernelized (k-PGM) and
   symmetric-subspace-reduced (Rc-PGM) Pretty Good Measurement classifiers,
-  together with the benchmark harness, the datasets and the notebook that
-  reproduce the empirical section of the accompanying paper.
+  together with the benchmark harness, the notebook and the dataset
+  preparation script that reproduce the empirical section of the accompanying
+  paper.
 type: software
 license: MIT
 version: 1.0.0

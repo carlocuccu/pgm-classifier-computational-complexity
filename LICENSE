@@ -25,7 +25,8 @@ SOFTWARE.
 
 NOTE ON THE DATA
 
-The MIT license above covers the source code of this repository only. The
-files under `datasets/` are redistributed copies (or documented derivations)
-of third-party datasets that carry their own terms; see `datasets/README.md`
-for the source, licence and citation of each one.
+The MIT license above covers the source code of this repository only. No
+dataset is distributed here: `scripts/fetch_datasets.py` downloads each one
+from its own public repository and rebuilds the derivation used in the paper.
+Those datasets carry the terms of their sources; see `docs/datasets.md` for the
+source, licence and citation of each one.

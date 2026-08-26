@@ -16,5 +16,6 @@ results_benchmark/selftest.csv
 # the paper. Re-running the harness overwrites it in place -- check `git status` before
 # committing, and keep the deposited run unless you mean to replace it.
 
-# Not redistributed: fetched by datasets/download_skin_segmentation.py
-datasets/Skin_NonSkin.txt
+# The data is not carried in the repository: `python scripts/fetch_datasets.py`
+# downloads it and rebuilds it, byte for byte, from its public sources.
+datasets/

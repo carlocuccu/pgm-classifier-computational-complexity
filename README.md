@@ -17,7 +17,8 @@ Measurement:
 
 The three are equivalent as classifiers and differ only in their computational
 profile. This repository contains the implementations, the analytic-condition
-evaluation behind Table 7, the empirical benchmark harness, and the datasets.
+evaluation behind Table 7, the empirical benchmark harness, and a script that
+downloads and rebuilds the datasets exactly as they were used.
 
 ## Quickstart
 
@@ -30,13 +31,13 @@ python scripts/fetch_datasets.py              # download the datasets
 python run_benchmarks.py selftest             # harness self-test (no torch needed)
 ```
 
-`scripts/fetch_datasets.py` downloads all twelve datasets from PMLB, OpenML and
-UCI, applies the documented transformations and verifies each file against the
-digests of `datasets/manifest.json`; the files it writes are byte-identical to
-the ones used in the paper. If the CSV files are already in `datasets/`, it
-reports them as `already correct` and downloads only Skin Segmentation, which
-is never committed. `python datasets/prepare_datasets.py check` verifies what
-is on disk without touching the network.
+The data is not carried in the repository: `datasets/` is empty until
+`scripts/fetch_datasets.py` fills it. That script is self-contained -- it holds
+the source, the licence, the transformation, the row order, the column
+formatting and the digest of every file -- and the twelve files it writes are
+byte-identical to the ones used in the paper. Files already present and already
+correct are left alone; `--check` re-verifies them without touching the
+network, and `--help` prints the full provenance of every dataset.
 
 `torch` is required by the three estimators and by the notebook. The dataset
 checks and the harness self-test run without it.
@@ -65,10 +66,12 @@ pgm-repo/
 │   ├── paper_numbers.py      derives every figure quoted in the paper from a run
 │   └── plot_componentB.py    redraws Figure 4 from componentB.csv
 ├── notebooks/table7.ipynb    regenerates Table 7
-├── datasets/                 the manifest, the preparation scripts and the CSV files
+├── datasets/                 empty; filled by scripts/fetch_datasets.py
 ├── results_benchmark/        the measurements reported in the paper, as produced
 ├── figures/                  the three figures of the paper
-└── docs/environment.md       where to record the machine the results were produced on
+└── docs/
+    ├── datasets.md           sources, licences and transformations of the data
+    └── environment.md        where to record the machine the results were produced on
 ```
 
 ## Using the estimators
@@ -162,25 +165,25 @@ only comparable across runs that share it:
 
 ## Datasets
 
-Eleven small benchmarks live in `datasets/`, header-less and with the class
-label in the last column; Skin Segmentation is fetched on demand.
-`datasets/README.md` documents, for every file, its public source, its licence,
-its citation and the transformation applied to it.
-
-None of them has to be carried in the repository. `python
-scripts/fetch_datasets.py` downloads each dataset from PMLB, OpenML or UCI,
-re-applies the documented transformation, restores the row order and the column
-formatting of the files used in the experiments, and verifies the result
-against the MD5/SHA-256 digests of `datasets/manifest.json`. What it writes is
+No dataset is carried in this repository. `python scripts/fetch_datasets.py`
+downloads each of the twelve from PMLB, OpenML or UCI, re-applies the
+documented transformation, restores the row order and the column formatting of
+the files used in the experiments, verifies the result against the recorded
+MD5/SHA-256 digests and writes it into `datasets/`. What it writes is
 byte-identical to the data behind Table 7 and Table 8, so the reported numbers
-reproduce exactly.
+reproduce exactly; nothing is written if any file fails its check.
 
 The row order is part of that guarantee, not a cosmetic detail: the stratified
 split is seeded but order-dependent, so the same rows in a different order give
-different accuracies. Ten of the eleven files keep the order of their public
-release; `car` is a stable partition of it, recorded in the manifest.
+different accuracies -- 0.900 instead of 0.967 on `iris`. Ten of the eleven CSV
+files keep the order of their public release; `car` is a stable partition of it,
+recorded in the script.
+
+`docs/datasets.md` documents, for every file, its public source, its licence,
+its citation and the transformation applied to it; `python
+scripts/fetch_datasets.py --help` prints the same from the script itself.
 
 ## Citing
 
 See `CITATION.cff`. The code is MIT-licensed (`LICENSE`); the datasets carry
-the terms of their own sources, listed in `datasets/README.md`.
+the terms of their own sources, listed in `docs/datasets.md`.

@@ -18,7 +18,10 @@ Run this file from the repository root, next to the `qunica/` package and the
     │       └── PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank.py
     └── datasets/
         ├── iris.csv ...           (header-less, last column = class label)
-        └── Skin_NonSkin.txt       (datasets/download_skin_segmentation.py)
+        └── Skin_NonSkin.txt       (tab-separated)
+
+`datasets/` is filled by `python scripts/fetch_datasets.py`, which downloads
+every dataset and rebuilds it, byte for byte, as it was used in the paper.
 
 Component A  (multi-dataset spot checks at the tabulated copy number c):
     python run_benchmarks.py A --reps 5
@@ -246,10 +249,13 @@ def load_dataset(name: str):
     of `stratified_split`, it makes the benchmarks fit the very same models the
     table describes, down to the reported accuracies.
     """
-    if name == "skin":
-        raw = np.loadtxt(DATA_DIR / SKIN_FILE, delimiter="\t")
-    else:
-        raw = np.loadtxt(DATA_DIR / f"{name}.csv", delimiter=",")
+    path = DATA_DIR / (SKIN_FILE if name == "skin" else f"{name}.csv")
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} not found. The datasets are not carried in the "
+            f"repository; run `python scripts/fetch_datasets.py` to download "
+            f"and rebuild them.")
+    raw = np.loadtxt(path, delimiter="\t" if name == "skin" else ",")
     return raw[:, :-1].astype(np.float64), raw[:, -1]
 
 
