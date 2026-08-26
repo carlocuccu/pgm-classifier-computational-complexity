@@ -1,47 +1,52 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Check or rebuild the dataset files of this repository.
+"""Verify, or rebuild from their public sources, the dataset files of this repository.
 
-The eleven CSV files shipped in this directory are the exact inputs of the
-experiments reported in the paper. Each one is a redistributed copy, or a
-documented derivation, of a public dataset; `manifest.json` records the source,
-the licence and the transformation of every file.
+The eleven CSV files of this directory are the exact inputs of the experiments
+reported in the paper. Each one is a redistributed copy, or a documented
+derivation, of a public dataset; `manifest.json` records the source, the
+licence, the transformation, the row order and the column formatting of every
+file, which together determine it down to the byte.
 
-Two modes are available.
+This module is both a command-line tool and the library used by
+`scripts/fetch_datasets.py`, which downloads the datasets instead of taking
+them from the repository.
+
+Two commands are available.
 
 ``check`` (default)
-    Recompute the digests of the shipped CSV files and compare them with
-    `manifest.json`. This is the check to run before reproducing any result.
+    Recompute the digests of the CSV files present in this directory and
+    compare them with `manifest.json`. This is the check to run before
+    reproducing any result; it needs no network access.
 
         python datasets/prepare_datasets.py check
 
 ``rebuild``
     Download each source from its public repository, re-apply the documented
-    transformation and compare the outcome with the shipped file. The
-    comparison is made on a row-order-independent digest, because the row
-    order of the shipped files is not part of the transformation (it is,
-    however, part of the experimental setup: the stratified split of the
-    notebook and of the benchmark harness is seeded but order-dependent, so
-    reproducing the reported numbers requires the shipped files).
+    transformation, restore the documented row order and column formatting,
+    and compare the outcome with `manifest.json`. With ``--outdir`` the
+    rebuilt files are written out; the files so produced are byte-identical to
+    the ones shipped here, so they reproduce the reported numbers exactly.
 
         python datasets/prepare_datasets.py rebuild --outdir /tmp/rebuilt
 
     Requires network access, `pandas`, and `scikit-learn` for the two OpenML
-    sources.
+    sources. To populate `datasets/` directly, use
+    ``python scripts/fetch_datasets.py``, which also fetches Skin Segmentation.
 
 The transformations are, in all cases, a composition of three operations:
 
 1. *label-rank encoding* -- a nominal column is replaced by the rank of its
    value in the ascending lexicographic order of that column's distinct
    labels (`car` only);
-2. *row removal* -- rows that cannot be amplitude-encoded, i.e. whose feature
-   vector is identically zero (`analcatdata_dmft`, `car`);
+2. *row removal* -- rows whose feature vector is identically zero
+   (`analcatdata_dmft`, `car`);
 3. *class relabelling* -- the class column is mapped onto the consecutive
    integers 0..l-1, preserving the order of the original labels (all files;
    a no-op where the source is already 0-based).
 
-plus, for `cleveland-nominal` only, the restoration of the 1-based coding of
-the original Cleveland database on the columns `cp` and `slope`.
+plus, for `cleveland-nominal` only, the 1-based coding of the original
+Cleveland database on the columns `cp` and `slope`.
 """
 
 from __future__ import annotations
@@ -52,6 +57,7 @@ import hashlib
 import io
 import json
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -65,7 +71,10 @@ USER_AGENT = "pgm-complexity-repo/1.0 (dataset preparation script)"
 # digests
 # --------------------------------------------------------------------------
 def file_digests(path: Path) -> dict:
-    raw = path.read_bytes()
+    return digests(path.read_bytes())
+
+
+def digests(raw: bytes) -> dict:
     return {"md5": hashlib.md5(raw).hexdigest(),
             "sha256": hashlib.sha256(raw).hexdigest()}
 
@@ -86,17 +95,43 @@ def content_digest(frame) -> str:
 # --------------------------------------------------------------------------
 # sources
 # --------------------------------------------------------------------------
-def _get(url: str, timeout: int = 120) -> bytes:
+def _get(url: str, timeout: int = 180) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
+
+
+def _lfs_url(url: str) -> str:
+    """Direct Git-LFS media URL for a `github.com/<o>/<r>/raw/<ref>/<path>` link.
+
+    PMLB stores its releases with Git LFS. The `github.com/.../raw/...` link
+    recorded in the manifest is the citable one and resolves the LFS object,
+    but it is a redirect and some networks block it; `media.githubusercontent`
+    serves the same bytes directly.
+    """
+    if "github.com/" not in url:
+        return url
+    tail = url.split("github.com/", 1)[1].replace("/raw/", "/", 1)
+    return "https://media.githubusercontent.com/media/" + tail
 
 
 def fetch_pmlb(url: str):
     """Read a PMLB `.tsv.gz` release into a data frame."""
     import pandas as pd
 
-    return pd.read_csv(io.BytesIO(gzip.decompress(_get(url))), sep="\t")
+    candidates = [_lfs_url(url), url]
+    errors = []
+    for candidate in candidates:
+        try:
+            payload = _get(candidate)
+        except urllib.error.URLError as exc:
+            errors.append(f"{candidate}: {exc}")
+            continue
+        if payload.startswith(b"version https://git-lfs"):
+            errors.append(f"{candidate}: Git-LFS pointer instead of the file")
+            continue
+        return pd.read_csv(io.BytesIO(gzip.decompress(payload)), sep="\t")
+    raise RuntimeError("could not download the source; " + "; ".join(errors))
 
 
 def fetch_openml(data_id: int):
@@ -133,9 +168,11 @@ def drop_zero_feature_rows(frame):
 
 
 def build(name: str, spec: dict):
-    """Rebuild one dataset from its public source. Returns a data frame."""
-    import pandas as pd
+    """Rebuild one dataset from its public source, in the order of the source.
 
+    Returns a data frame of floats. The row order is the one of the public
+    release; `apply_row_order` turns it into the order of the shipped file.
+    """
     source = spec["source"]
 
     if source["repository"] == "PMLB":
@@ -162,8 +199,12 @@ def build(name: str, spec: dict):
                     f"expected {expected}")
             for column in frame.columns:
                 frame[column] = frame[column].astype(float).astype(int)
+            # Some OpenML clients return every nominal attribute as a 0-based
+            # category index; others return the codes of the original
+            # database. Shift only in the first case.
             for column in spec["shift_plus_one"]:
-                frame[column] = frame[column] + 1
+                if int(frame[column].min()) == 0:
+                    frame[column] = frame[column] + 1
         else:
             raise RuntimeError(f"{name}: no OpenML rule defined")
 
@@ -181,6 +222,61 @@ def build(name: str, spec: dict):
 
 
 # --------------------------------------------------------------------------
+# row order and rendering
+# --------------------------------------------------------------------------
+def apply_row_order(frame, spec: dict):
+    """Reorder the rows of a rebuilt frame into the order of the shipped file.
+
+    `row_order` is either the string ``"source"``, meaning that the shipped
+    file keeps the order of the public release, or a ``stable_partition``
+    record listing the source indices that the shipped file moves to the end
+    (`car` only). Both blocks of a partition keep their relative order.
+    """
+    order = spec.get("row_order", "source")
+    if order == "source":
+        return frame
+    if isinstance(order, dict) and order.get("kind") == "stable_partition":
+        tail = list(order["tail"])
+        moved = set(tail)
+        if any(i < 0 or i >= len(frame) for i in moved):
+            raise RuntimeError("row_order: index out of range")
+        head = [i for i in range(len(frame)) if i not in moved]
+        return frame.iloc[head + tail].reset_index(drop=True)
+    raise RuntimeError(f"unsupported row_order {order!r}")
+
+
+def render_csv(frame, spec: dict) -> bytes:
+    """Serialize a frame exactly as the shipped CSV file.
+
+    `column_types` records, per column, whether the shipped file writes it as
+    an integer or as a decimal; the files use CRLF line endings.
+    """
+    import pandas as pd
+
+    types = spec["column_types"]
+    if len(types) != frame.shape[1]:
+        raise RuntimeError(f"column_types has {len(types)} entries for "
+                           f"{frame.shape[1]} columns")
+    out = pd.DataFrame(frame.to_numpy(), columns=range(frame.shape[1]))
+    for index, kind in enumerate(types):
+        out[index] = out[index].astype(int if kind == "int" else float)
+    return out.to_csv(header=False, index=False,
+                      lineterminator="\r\n").encode()
+
+
+def materialize(name: str, spec: dict) -> bytes:
+    """Download, transform, order and serialize one dataset. Returns CSV bytes."""
+    frame = build(name, spec)
+    if frame.shape[0] != spec["n_rows"] or frame.shape[1] - 1 != spec["n_features"]:
+        raise RuntimeError(
+            f"unexpected shape {frame.shape[0]}x{frame.shape[1] - 1}, "
+            f"expected {spec['n_rows']}x{spec['n_features']}")
+    if content_digest(frame) != spec["content_sha256"]:
+        raise RuntimeError("the rebuilt content does not match the manifest")
+    return render_csv(apply_row_order(frame, spec), spec)
+
+
+# --------------------------------------------------------------------------
 # commands
 # --------------------------------------------------------------------------
 def load_manifest() -> dict:
@@ -189,31 +285,33 @@ def load_manifest() -> dict:
 
 def cmd_check(args) -> int:
     manifest = load_manifest()
+    directory = Path(args.directory).resolve() if args.directory else HERE
     failures = 0
     print(f"{'dataset':<20}{'rows':>7}{'feat':>6}{'cls':>5}  digest")
     print("-" * 58)
     for name, spec in manifest["datasets"].items():
-        path = HERE / spec["file"]
+        path = directory / spec["file"]
         if not path.exists():
             print(f"{name:<20}{'':>18}  MISSING")
             failures += 1
             continue
-        digests = file_digests(path)
-        ok = (digests["md5"] == spec["md5"]
-              and digests["sha256"] == spec["sha256"])
+        found = file_digests(path)
+        ok = (found["md5"] == spec["md5"] and found["sha256"] == spec["sha256"])
         failures += 0 if ok else 1
         print(f"{name:<20}{spec['n_rows']:>7}{spec['n_features']:>6}"
               f"{spec['n_classes']:>5}  {'OK' if ok else 'DIGEST MISMATCH'}")
 
-    skin = HERE / manifest["not_redistributed"]["skin_segmentation"]["file"]
+    skin = directory / manifest["not_redistributed"]["skin_segmentation"]["file"]
     print("-" * 58)
     print(f"Skin_NonSkin.txt: {'present' if skin.exists() else 'absent'} "
-          f"(not redistributed; run download_skin_segmentation.py to fetch it)")
+          f"(not redistributed; run scripts/fetch_datasets.py to fetch it)")
 
     if failures:
         print(f"\n{failures} file(s) do not match the manifest.")
+        print("Run `python scripts/fetch_datasets.py` to rebuild them from "
+              "their public sources.")
     else:
-        print("\nAll shipped dataset files match the manifest.")
+        print("\nAll dataset files match the manifest.")
     return 1 if failures else 0
 
 
@@ -228,31 +326,27 @@ def cmd_rebuild(args) -> int:
     for name in names:
         spec = manifest["datasets"][name]
         try:
-            frame = build(name, spec)
+            raw = materialize(name, spec)
         except Exception as exc:  # noqa: BLE001 - report and continue
-            print(f"{name:<20} FETCH/BUILD FAILED: {exc}")
+            print(f"{name:<20} FAILED: {exc}")
             failures += 1
             continue
 
-        digest = content_digest(frame)
-        ok = digest == spec["content_sha256"]
-        shape_ok = (frame.shape[0] == spec["n_rows"]
-                    and frame.shape[1] - 1 == spec["n_features"])
-        failures += 0 if (ok and shape_ok) else 1
-        status = "OK" if ok else ("SHAPE MISMATCH" if not shape_ok
-                                  else "CONTENT MISMATCH")
-        print(f"{name:<20}{frame.shape[0]:>7}{frame.shape[1] - 1:>6}  {status}")
+        found = digests(raw)
+        ok = (found["md5"] == spec["md5"] and found["sha256"] == spec["sha256"])
+        failures += 0 if ok else 1
+        print(f"{name:<20}{spec['n_rows']:>7}{spec['n_features']:>6}  "
+              f"{'OK' if ok else 'DIGEST MISMATCH'}")
 
         if outdir:
-            target = outdir / spec["file"]
-            frame.to_csv(target, header=False, index=False)
+            (outdir / spec["file"]).write_bytes(raw)
 
     if outdir:
         print(f"\nRebuilt files written to {outdir}")
     if failures:
         print(f"{failures} dataset(s) could not be reproduced from the source.")
     else:
-        print("Every dataset was reproduced from its public source.")
+        print("Every dataset was reproduced, byte for byte, from its public source.")
     return 1 if failures else 0
 
 
@@ -262,7 +356,10 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command")
 
-    p_check = sub.add_parser("check", help="verify the shipped CSV files")
+    p_check = sub.add_parser("check", help="verify the CSV files on disk")
+    p_check.add_argument("--directory", default=None,
+                         help="verify the files in this directory "
+                              "(default: datasets/)")
     p_check.set_defaults(func=cmd_check)
 
     p_rebuild = sub.add_parser(

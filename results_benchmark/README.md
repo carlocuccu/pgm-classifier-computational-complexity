@@ -29,8 +29,8 @@ with the machine description.
 ## Regenerating them
 
 ```bash
+python scripts/fetch_datasets.py                  # once, if datasets/ is empty
 python run_benchmarks.py A --reps 5
-python datasets/download_skin_segmentation.py     # once
 python run_benchmarks.py B --reps 3
 python scripts/paper_numbers.py                   # every figure quoted in the paper
 ```

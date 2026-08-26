@@ -4,20 +4,45 @@ Twelve datasets are used in the paper: eleven small benchmarks, which appear in
 Table 7 and in Component A of the benchmark harness, and Skin Segmentation,
 which is used in Component B.
 
+## Getting the data
+
+None of the twelve files has to be shipped with the code. Running
+
+```bash
+python scripts/fetch_datasets.py
+```
+
+downloads every dataset from its public repository, applies the transformation
+documented below, restores the row order and the column formatting of the files
+used in the experiments, writes the result into this directory and verifies
+each file against the MD5/SHA-256 digests of `manifest.json`. The outcome is
+**byte-identical** to the data used for Table 7 and for the benchmarks, so the
+reported numbers reproduce exactly. Nothing is written unless every file has
+been rebuilt and verified.
+
+If the CSV files are already present, the same command reports them as
+`already correct` and downloads nothing; `--force` re-downloads them,
+`--skip-skin` leaves out the one large file, and `--datasets NAME ...`
+restricts the run. To verify files that are already on disk, without network
+access, use
+
+```bash
+python datasets/prepare_datasets.py check
+```
+
 ## File format
 
-The eleven CSV files in this directory are **header-less**, comma-separated,
+The eleven CSV files are **header-less**, comma-separated, CRLF-terminated,
 and the **last column is the integer class label**, taking the consecutive
 values `0 .. l-1`. This is the layout that `notebooks/table7.ipynb` and
 `run_benchmarks.py` read with `pandas.read_csv(path, header=None)`.
 
 `manifest.json` is the machine-readable counterpart of this page: for every
 file it records the source, its licence, the transformation applied to it, the
-resulting shape and the MD5/SHA-256 digests. Verify the files with
-
-```bash
-python datasets/prepare_datasets.py check
-```
+resulting shape, the MD5/SHA-256 digests, and the two keys that make a
+downloaded copy byte-identical to the one used in the experiments —
+`row_order`, described below, and `column_types`, which says whether each
+column is written as an integer or as a decimal.
 
 ## Sources and transformations
 
@@ -58,33 +83,52 @@ the source labels are already `0 .. l-1` the operation is the identity.
 
 **Restoration of the 1-based nominal coding** (`cleveland-nominal` only). The
 columns of the file are, in order, `sex`, `cp`, `fbs`, `restecg`, `exang`,
-`slope`, `ca`, `class`. The OpenML release stores every nominal attribute as a
-0-based category index; `cp` and `slope` are shifted back to the coding of the
-original Cleveland database, `cp ∈ {1,2,3,4}` and `slope ∈ {1,2,3}`.
+`slope`, `thal`, `class`. The columns `cp` and `slope` carry the coding of the
+original Cleveland database, `cp ∈ {1,2,3,4}` and `slope ∈ {1,2,3}`; some
+OpenML clients return every nominal attribute as a 0-based category index, in
+which case those two columns are shifted by one. All other columns are copied
+verbatim.
+
+## Row order
+
+The row order is not a detail of presentation: the notebook and the harness
+split the data with `train_test_split(..., shuffle=True, stratify=y,
+random_state=42)`, whose outcome is seeded but depends on the order of the
+input rows. A file with the same rows in a different order gives different
+accuracies in Table 7 — on `iris`, for instance, 0.900 instead of 0.967.
+
+The order is therefore recorded in `manifest.json`, under `row_order`, and
+restored by `scripts/fetch_datasets.py`:
+
+- ten of the eleven files keep the order of their public release
+  (`"row_order": "source"`); the rows removed by the zero-feature filter simply
+  drop out, leaving the remaining ones in place;
+- `car.csv` is a *stable partition* of that order: 1353 rows first, then the
+  374 rows whose source indices `manifest.json` lists, each block in the order
+  of the source.
+
+`manifest.json` also keeps `content_sha256`, a row-order-independent digest of
+the same content, which identifies a file up to a permutation of its rows.
 
 ## Rebuilding the files from their sources
 
+`scripts/fetch_datasets.py` is the command to use. `prepare_datasets.py` also
+exposes the rebuild as a check that writes nothing:
+
 ```bash
+python datasets/prepare_datasets.py rebuild                    # verify only
 python datasets/prepare_datasets.py rebuild --outdir /tmp/rebuilt
 ```
 
-downloads each source, re-applies the transformation above and compares the
-result with the shipped file. The comparison is made on a row-order-independent
-digest (`content_sha256` in `manifest.json`), because the row order of the
-shipped files is not part of the transformation.
-
-The row order does, however, matter for the reported numbers: the notebook and
-the harness use `train_test_split(..., shuffle=True, stratify=y,
-random_state=42)`, whose outcome is seeded but depends on the order of the
-input rows. **Reproducing Table 7 and the benchmarks requires the CSV files as
-shipped here**, not a rebuilt copy.
+Both paths run the same code and produce the same bytes.
 
 ## Skin Segmentation
 
-`Skin_NonSkin.txt` is not included, because of its size. Fetch it with
+`Skin_NonSkin.txt` is never committed, because of its size. It is fetched by
+`scripts/fetch_datasets.py` along with everything else, or on its own with
 
 ```bash
-python datasets/download_skin_segmentation.py
+python datasets/download_skin_segmentation.py     # = fetch_datasets.py --only-skin
 ```
 
 which downloads the archive from the UCI Machine Learning Repository and writes

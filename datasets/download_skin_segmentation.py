@@ -9,6 +9,10 @@ demand from the UCI Machine Learning Repository and written as
 
     python datasets/download_skin_segmentation.py
 
+This is a shortcut for `python scripts/fetch_datasets.py --only-skin`, which
+does the same work; `scripts/fetch_datasets.py` without options fetches this
+file together with the eleven small datasets.
+
 Source
 ------
 Rajen Bhatt and Abhinav Dhall, *Skin Segmentation*, UCI Machine Learning
@@ -17,45 +21,19 @@ Repository, 2012. https://doi.org/10.24432/C5T30C -- CC BY 4.0.
 
 from __future__ import annotations
 
-import io
+import runpy
 import sys
-import urllib.request
-import zipfile
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-TARGET = HERE / "Skin_NonSkin.txt"
-
-URL = "https://archive.ics.uci.edu/static/public/229/skin+segmentation.zip"
-MEMBER = "Skin_NonSkin.txt"
-EXPECTED_ROWS = 245057
-
-USER_AGENT = "pgm-complexity-repo/1.0 (dataset download script)"
+FETCH = Path(__file__).resolve().parent.parent / "scripts" / "fetch_datasets.py"
 
 
 def main() -> int:
-    if TARGET.exists():
-        rows = sum(1 for line in TARGET.open() if line.strip())
-        print(f"{TARGET.name} already present ({rows} rows); nothing to do.")
-        return 0 if rows == EXPECTED_ROWS else 1
-
-    print(f"Downloading {URL} ...")
-    request = urllib.request.Request(URL, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=300) as response:
-        payload = response.read()
-
-    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-        names = archive.namelist()
-        member = MEMBER if MEMBER in names else names[0]
-        data = archive.read(member)
-
-    TARGET.write_bytes(data)
-
-    rows = sum(1 for line in TARGET.open() if line.strip())
-    print(f"Wrote {TARGET} ({rows} rows).")
-    if rows != EXPECTED_ROWS:
-        print(f"Warning: expected {EXPECTED_ROWS} rows.")
-        return 1
+    sys.argv = [str(FETCH), "--only-skin"]
+    try:
+        runpy.run_path(str(FETCH), run_name="__main__")
+    except SystemExit as exit_code:
+        return int(exit_code.code or 0)
     return 0
 
 

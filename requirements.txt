@@ -9,10 +9,9 @@ torch>=2.0
 tqdm>=4.65
 matplotlib>=3.7
 
-# Optional, only needed by datasets/prepare_datasets.py to rebuild the CSV
-# files from their public sources (the shipped CSV files are enough to run
-# everything else).
-requests>=2.28
+# scripts/fetch_datasets.py downloads the datasets with the standard library
+# and pandas; the two OpenML sources go through scikit-learn, already listed
+# above. No extra dependency is needed.
 
 # Optional, only needed to execute notebooks/table7.ipynb.
 jupyter>=1.0

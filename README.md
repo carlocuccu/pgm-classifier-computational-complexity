@@ -26,9 +26,17 @@ git clone <REPOSITORY-URL> && cd pgm-repo
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-python datasets/prepare_datasets.py check     # dataset integrity
+python scripts/fetch_datasets.py              # download the datasets
 python run_benchmarks.py selftest             # harness self-test (no torch needed)
 ```
+
+`scripts/fetch_datasets.py` downloads all twelve datasets from PMLB, OpenML and
+UCI, applies the documented transformations and verifies each file against the
+digests of `datasets/manifest.json`; the files it writes are byte-identical to
+the ones used in the paper. If the CSV files are already in `datasets/`, it
+reports them as `already correct` and downloads only Skin Segmentation, which
+is never committed. `python datasets/prepare_datasets.py check` verifies what
+is on disk without touching the network.
 
 `torch` is required by the three estimators and by the notebook. The dataset
 checks and the harness self-test run without it.
@@ -39,7 +47,7 @@ checks and the harness self-test run without it.
 |---|---|---|
 | **Table 7** (accuracy saturation and Rc-PGM advantage conditions) | `jupyter notebook notebooks/table7.ipynb` | `results_table7.csv` and the LaTeX body of the table |
 | **Section "Some empirical evidence"**, per-dataset timings | `python run_benchmarks.py A --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
-| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `python datasets/download_skin_segmentation.py`<br>`python run_benchmarks.py B --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
+| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `python scripts/fetch_datasets.py --only-skin`<br>`python run_benchmarks.py B --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
 | **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `python scripts/paper_numbers.py` re-derives every figure quoted in the text |
 
@@ -52,9 +60,12 @@ pgm-repo/
 │   ├── KPGMC_Low_Rank.py                           k-PGM     (qunica.KPGM)
 │   └── PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank.py    Rc-PGM    (qunica.RcPGM)
 ├── run_benchmarks.py         empirical benchmark harness (Components A, B, selftest)
-├── scripts/paper_numbers.py  derives every figure quoted in the paper from a run
+├── scripts/
+│   ├── fetch_datasets.py     downloads and rebuilds every dataset used in the paper
+│   ├── paper_numbers.py      derives every figure quoted in the paper from a run
+│   └── plot_componentB.py    redraws Figure 4 from componentB.csv
 ├── notebooks/table7.ipynb    regenerates Table 7
-├── datasets/                 the 11 CSV files, their manifest and preparation scripts
+├── datasets/                 the manifest, the preparation scripts and the CSV files
 ├── results_benchmark/        the measurements reported in the paper, as produced
 ├── figures/                  the three figures of the paper
 └── docs/environment.md       where to record the machine the results were produced on
@@ -151,16 +162,23 @@ only comparable across runs that share it:
 
 ## Datasets
 
-Eleven small benchmarks are shipped in `datasets/`, header-less and with the
-class label in the last column; Skin Segmentation is fetched on demand.
+Eleven small benchmarks live in `datasets/`, header-less and with the class
+label in the last column; Skin Segmentation is fetched on demand.
 `datasets/README.md` documents, for every file, its public source, its licence,
-its citation and the transformation applied to it, and
-`datasets/prepare_datasets.py` both verifies the shipped files and rebuilds
-them from those sources.
+its citation and the transformation applied to it.
 
-Reproducing the reported numbers requires the CSV files **as shipped**: the
-stratified split is seeded but order-dependent, and the row order is not part
-of the documented transformation.
+None of them has to be carried in the repository. `python
+scripts/fetch_datasets.py` downloads each dataset from PMLB, OpenML or UCI,
+re-applies the documented transformation, restores the row order and the column
+formatting of the files used in the experiments, and verifies the result
+against the MD5/SHA-256 digests of `datasets/manifest.json`. What it writes is
+byte-identical to the data behind Table 7 and Table 8, so the reported numbers
+reproduce exactly.
+
+The row order is part of that guarantee, not a cosmetic detail: the stratified
+split is seeded but order-dependent, so the same rows in a different order give
+different accuracies. Ten of the eleven files keep the order of their public
+release; `car` is a stable partition of it, recorded in the manifest.
 
 ## Citing
 
