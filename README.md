@@ -126,6 +126,35 @@ memory, so a single threshold governs the two prediction metrics. These are the
 inequalities evaluated in Table 7, and the ones `notebooks/table7.ipynb`
 recomputes for every dataset.
 
+## Table 7: how the copy number is chosen
+
+`notebooks/table7.ipynb` fits the k-PGM at **every** copy number of a fixed grid,
+`c = 1 … MAX_COPIES` (currently 9), for every dataset — an exhaustive sweep, with
+no early stopping and no per-dataset range. The row carried into Table 7 is the
+**smallest `c` attaining the maximum test-set accuracy** on that grid (`idxmax`
+keeps the first occurrence). It is an argmax over the grid, not a
+plateau-detection criterion and not a visual reading: where the accuracy is flat,
+the smallest `c` of the plateau is the one reported.
+
+The accuracies come from **one** seeded stratified 80/20 split
+(`random_state=42`) — the same split `run_benchmarks.py` uses, which is why
+Component A reproduces them exactly. They are therefore single-split point
+estimates, with no repetitions and no confidence interval; on the smaller
+datasets the test set is small (15 samples for `confidence`, 22 for `cloud`, 30
+for `iris`), so one misclassification moves the accuracy by several points.
+
+The notebook makes the process auditable: it prints the whole accuracy-vs-`c`
+curve with the selected point starred, flags the two cases that must not be read
+as saturation — `c* = 1` (copies bring no gain) and `c* = MAX_COPIES` (the
+maximum sits at the edge of the grid, so the accuracy may still be rising) — and
+writes the complete sweep to `results_table7_sweep.csv`.
+
+The accuracy plays no part in the advantage conditions themselves: it only fixes
+the `c` at which they are evaluated. Each condition compares a quantity growing
+with `d_sym` against one that does not, so each holds for every `c` up to some
+value and fails beyond it; the conditions can be recomputed at any other `c`
+straight from `N`, `l`, `d` and `d_sym`.
+
 ## Measurement protocol
 
 The benchmark harness follows a fixed protocol, and the numbers it reports are
