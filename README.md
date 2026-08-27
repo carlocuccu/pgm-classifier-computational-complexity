@@ -60,11 +60,10 @@ pgm-repo/
 │   ├── PGMHQC_gpu_cpu_dtype.py                     c-PGM     (qunica.CPGM)
 │   ├── KPGMC_Low_Rank.py                           k-PGM     (qunica.KPGM)
 │   └── PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank.py    Rc-PGM    (qunica.RcPGM)
-├── run_benchmarks.py         empirical benchmark harness (Components A, B, selftest)
+├── run_benchmarks.py         benchmark harness (Components A, B, selftest, replot)
 ├── scripts/
 │   ├── fetch_datasets.py     downloads and rebuilds every dataset used in the paper
-│   ├── paper_numbers.py      derives every figure quoted in the paper from a run
-│   └── plot_componentB.py    redraws Figure 4 from componentB.csv
+│   └── paper_numbers.py      derives every figure quoted in the paper from a run
 ├── notebooks/table7.ipynb    regenerates Table 7
 ├── datasets/                 empty; filled by scripts/fetch_datasets.py
 ├── results_benchmark/        the measurements reported in the paper, as produced

@@ -504,6 +504,40 @@ def component_B(args):
         print(f"[B] plot skipped ({exc}); use componentB.csv")
 
 
+def _log_ticks(axis, lo, hi):
+    """Make a logarithmic axis readable between `lo` and `hi`.
+
+    A panel that spans one or two decades gets a single label from the
+    default decade locator, which is not enough to read a plateau or a
+    crossing off the plot. Such an axis is labelled at 1, 2 and 5 times each
+    power of ten; an axis spanning more than three decades keeps the decade
+    labels, which are already plentiful. Both get unlabelled minor ticks at
+    every 2..9, so intermediate values can be interpolated by eye.
+    """
+    from matplotlib.ticker import LogLocator, NullFormatter, FuncFormatter
+
+    decades = math.log10(hi) - math.log10(lo) if lo > 0 and hi > lo else 0.0
+    subs = (1.0,) if decades > 3.0 else (1.0, 2.0, 5.0)
+
+    def fmt(value, _pos):
+        if value <= 0:
+            return ""
+        if 1e-3 <= value < 1e4:
+            text = f"{value:.10g}"
+            return text
+        exponent = int(round(math.log10(value)))
+        mantissa = value / 10.0 ** exponent
+        if abs(mantissa - 1.0) < 1e-9:
+            return f"$10^{{{exponent}}}$"
+        return f"${mantissa:.10g}\\times10^{{{exponent}}}$"
+
+    axis.set_major_locator(LogLocator(base=10.0, subs=subs, numticks=32))
+    axis.set_major_formatter(FuncFormatter(fmt))
+    axis.set_minor_locator(LogLocator(base=10.0, subs=tuple(range(2, 10)),
+                                      numticks=100))
+    axis.set_minor_formatter(NullFormatter())
+
+
 def plot_B(rows, info):
     import matplotlib
     matplotlib.use("Agg")
@@ -549,12 +583,51 @@ def plot_B(rows, info):
                        label=f"empirical N$\\approx${emp:.0f}")
         ax.set_xscale("log"); ax.set_yscale("log")
         ax.set_xlabel("N (training samples)"); ax.set_ylabel(label)
-        ax.legend(fontsize=8); ax.grid(alpha=0.3)
+        _log_ticks(ax.yaxis, *ax.get_ylim())
+        ax.legend(fontsize=8)
+        ax.grid(which="major", alpha=0.3)
+        ax.grid(which="minor", alpha=0.15, lw=0.5)
     fig.tight_layout()
     for ext in ("png", "pdf"):
         out = OUT_DIR / f"componentB_crossover.{ext}"
         fig.savefig(out, dpi=160)
         print(f"[B] figure -> {out}")
+
+
+def replot_B():
+    """Redraw the Component B figure from the deposited CSV, without measuring.
+
+    The figure is a rendering of `componentB.csv`; regenerating it after a
+    change to the axes or the styling does not require re-running the sweep,
+    and leaves the measurements untouched.
+    """
+    import csv as _csv
+
+    csv_path = OUT_DIR / "componentB.csv"
+    meta_path = OUT_DIR / "componentB_meta.json"
+    if not csv_path.exists() or not meta_path.exists():
+        raise SystemExit(f"{csv_path.name} and {meta_path.name} are both needed; "
+                         f"run `python run_benchmarks.py B` first.")
+
+    numeric = {"N", "d", "c", "l", "fit_rss_peak", "pred_rss_peak", "model_bytes"}
+    rows = []
+    with csv_path.open() as handle:
+        for record in _csv.DictReader(handle):
+            values = {}
+            for key, raw in record.items():
+                if key in ("method", "dataset"):
+                    values[key] = raw
+                elif key in numeric:
+                    values[key] = int(float(raw))
+                else:
+                    values[key] = float(raw)
+            rows.append(Cell(**values))
+
+    info = json.loads(meta_path.read_text())["thresholds"]
+    plot_B(rows, info)
+    print(f"[replot] redrawn from {csv_path} ({len(rows)} rows); "
+          f"the measurements were not touched.")
+    return 0
 
 
 # ----------------------------------------------------------------------------
@@ -674,7 +747,7 @@ def env_info():
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("component", choices=["A", "B", "all", "selftest"])
+    ap.add_argument("component", choices=["A", "B", "all", "selftest", "replot"])
     ap.add_argument("--reps", type=int, default=5)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--threads", type=int, default=1)
@@ -690,6 +763,8 @@ def main():
 
     OUT_DIR.mkdir(exist_ok=True)
     print(f"[env] {json.dumps(env_info())}")
+    if args.component == "replot":
+        return replot_B()
     if args.component == "selftest":
         selftest(args)
     elif args.component == "A":
