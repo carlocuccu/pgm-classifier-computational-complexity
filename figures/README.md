@@ -79,5 +79,6 @@ python run_benchmarks.py B --reps 3
 Its three panels compare the k-PGM and the Rc-PGM on training time, stored
 model memory and prediction time, each against the threshold of the condition
 that governs it. Note that the stored model is bounded by the *prediction*
-condition `N > l·d_sym²/(d + r_G)`, not by the training-memory one: the memory a
-fitted k-PGM retains is the `O(N(d + r_G))` term that drives its prediction cost.
+condition `N > l·d_sym²/(d + r_{G^c})`, not by the training-memory one: the
+memory a fitted k-PGM retains is the `O(N(d + r_{G^c}))` term that drives its
+prediction cost.

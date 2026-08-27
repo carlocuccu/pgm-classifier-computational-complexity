@@ -184,9 +184,9 @@ def component_b_report(b, b_meta) -> None:
     pairs = [
         ("training time", "fit_mean", thr["tr_time_thr"], "N > l^(1/3) dsym"),
         ("model memory", "model_bytes", thr["pred_thr"],
-         "N > l dsym^2 / (d~ + r_G)   [prediction condition]"),
+         "N > l dsym^2 / (d + r_{G^c})   [prediction condition]"),
         ("prediction time", "pred_mean", thr["pred_thr"],
-         "N > l dsym^2 / (d~ + r_G)"),
+         "N > l dsym^2 / (d + r_{G^c})"),
     ]
     for label, field, threshold, condition in pairs:
         kv = [float(x[field]) for x in k]

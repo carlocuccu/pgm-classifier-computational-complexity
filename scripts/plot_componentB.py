@@ -12,8 +12,9 @@ re-running the benchmark.
 
 Each panel carries the threshold of the condition that actually governs the
 quantity plotted. Training time is governed by `N > l^(1/3) dsym`; prediction
-time by `N > l dsym^2 / (d + r_G)`; and so is the *stored model*, because the
-memory a fitted k-PGM retains is the O(N(d + r_G)) term that its prediction
+time by `N > l dsym^2 / (d + r_{G^c})`; and so is the *stored model*, because
+the memory a fitted k-PGM retains is the O(N(d + r_{G^c})) term that its
+prediction
 cost is made of -- not the O(N^2) Gram matrix, which is transient and released
 when `fit` returns. The training-memory condition `N > dsym^2` bounds the peak
 working set, not the stored model, and is therefore not the threshold to draw
@@ -89,9 +90,9 @@ def draw(rows, meta, outdir: Path, stem: str = "componentB_crossover"):
         ("fit_mean", 1.0, "training time [s]", thr["tr_time_thr"],
          r"$N^{*}=\sqrt[3]{l}\,d_{\mathrm{sym}}$"),
         ("model_bytes", 1e-3, "stored model [kB]", thr["pred_thr"],
-         r"$N^{*}=l\,d_{\mathrm{sym}}^{2}/(d+r_G)$"),
+         r"$N^{*}=l\,d_{\mathrm{sym}}^{2}/(d+r_{G^{c}})$"),
         ("pred_mean", 1e3, "prediction time [ms]", thr["pred_thr"],
-         r"$N^{*}=l\,d_{\mathrm{sym}}^{2}/(d+r_G)$"),
+         r"$N^{*}=l\,d_{\mathrm{sym}}^{2}/(d+r_{G^{c}})$"),
     ]
 
     fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.5))

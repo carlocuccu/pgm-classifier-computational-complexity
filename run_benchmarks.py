@@ -528,7 +528,7 @@ def plot_B(rows, info):
                 return math.exp(math.log(xs[i]) + t * (math.log(xs[i + 1]) - math.log(xs[i])))
         return None
 
-    # The stored model of the k-PGM is the O(N (d + r_G)) term that governs its
+    # The stored model of the k-PGM is the O(N (d + r_{G^c})) term that governs its
     # PREDICTION cost, so the middle panel is compared with the prediction
     # threshold, not with the training-memory one.
     panels = [("fit_mean", "training time [s]", info["tr_time_thr"]),

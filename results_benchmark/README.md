@@ -42,4 +42,5 @@ committing, and restore with `git checkout results_benchmark/` if you did not
 mean to replace the reported run.
 
 Timings depend on the machine; the equivalence check, the retained ranks
-`r_G`, the accuracies and the model sizes do not, and should reproduce exactly.
+`r_{G^c}`, the accuracies and the model sizes do not, and should reproduce
+exactly.

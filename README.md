@@ -12,7 +12,7 @@ Measurement:
 | name | idea | key dimension |
 |---|---|---|
 | **c-PGM** | explicit tensor copies of the encoded sample | `d^c` |
-| **k-PGM** | the kernel trick replaces the tensor power by the entrywise `c`-th power of the Gram matrix | `N`, `r_G` |
+| **k-PGM** | the kernel trick replaces the tensor power by the entrywise `c`-th power of the Gram matrix | `N`, `r_{G^c}` |
 | **Rc-PGM** | the c-PGM restricted to the symmetric subspace | `d_sym = C(d + c - 1, c)` |
 
 The three are equivalent as classifiers and differ only in their computational
@@ -95,14 +95,15 @@ different in the two families:
   features. `encoding="amplit"` appends one component to each vector before
   ℓ₂-normalisation, so a dataset with `p` raw features gives `d = p + 1`. The
   symmetric basis of the Rc-PGM and every occurrence of `d_sym` are built on
-  that `d`; with this convention `r_G ≤ min(N, d_sym)` holds in every row of
+  that `d`; with this convention `r_{G^c} ≤ min(N, d_sym)` holds in every row of
   Table 7.
 - **Retained rank.** The k-PGM keeps the eigenvectors of `G^c` whose eigenvalue
-  exceeds `tol = 1e-6`; their number is `r_G`, available after `fit` as
-  `model.lam_inv_sqrt.shape[0]`. The c-PGM and the Rc-PGM apply their own `tol`
-  to the spectrum of `σ = G^c / N` instead, so the same numerical truncation
-  corresponds to a threshold `N` times smaller; `run_benchmarks.py` rescales it
-  accordingly (see below).
+  exceeds `tol = 1e-6`; their number is `r_{G^c}`, the numerical rank of the
+  `c`-th power Gram matrix `G^c` — not of `G`, from which it differs as soon as
+  `c > 1` — available after `fit` as `model.lam_inv_sqrt.shape[0]`. The c-PGM
+  and the Rc-PGM apply their own `tol` to the spectrum of `σ = G^c / N`
+  instead, so the same numerical truncation corresponds to a threshold `N`
+  times smaller; `run_benchmarks.py` rescales it accordingly (see below).
 
 Both estimators are used with their default empirical priors
 (`class_weight=None`, `p_j = #k_j / N`), which is the convention Table 7
@@ -111,15 +112,16 @@ reports and the one under which `σ = G^c / N`.
 ## The advantage conditions
 
 For a dataset with `N` training samples, `l` classes, encoded dimension `d` and
-retained Gram rank `r_G`, the Rc-PGM is preferable to the k-PGM when
+retained rank `r_{G^c}` of the `c`-th power Gram matrix, the Rc-PGM is
+preferable to the k-PGM when
 
 | resource | condition |
 |---|---|
 | training time | `N > l^(1/3) · d_sym` |
 | training memory | `N > d_sym²` |
-| prediction time **and** memory | `N > l · d_sym² / (d + r_G)` |
+| prediction time **and** memory | `N > l · d_sym² / (d + r_{G^c})` |
 
-The full prediction cost of the k-PGM is `O(N(d + r_G))` in both time and
+The full prediction cost of the k-PGM is `O(N(d + r_{G^c}))` in both time and
 memory, so a single threshold governs the two prediction metrics. These are the
 inequalities evaluated in Table 7, and the ones `notebooks/table7.ipynb`
 recomputes for every dataset.
