@@ -9,7 +9,7 @@ abstract: >-
   paper.
 type: software
 license: MIT
-version: 1.0.0
+version: 1.0.1
 date-released: "2026-08-28"
 repository-code: "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
 url: "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
