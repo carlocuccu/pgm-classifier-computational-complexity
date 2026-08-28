@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10 is the floor the reproduction environment needs; 3.12 is where
+        # the engineering is developed. The project claims both, so both run.
+        python: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python }}
+        run: uv python install ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: uv sync --locked --group dev --python ${{ matrix.python }}
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      # The estimator tests come along for free: the project depends on torch,
+      # so `-m torch` is not skipped here and the equivalence of the k-PGM and
+      # the Rc-PGM is exercised on every push.
+      - name: Test
+        run: uv run pytest
+
+      # Exercises the whole measurement pipeline with numpy stand-ins: the
+      # split, the timing, the memory accounting and the thresholds, without
+      # spending CI minutes on a real benchmark.
+      - name: Harness self-test
+        run: uv run python run_benchmarks.py selftest
