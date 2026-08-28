@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Download and prepare every dataset used in the paper.
 
 This is the only file needed to obtain the data: run it and `datasets/` is
@@ -146,7 +145,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/analcatdata_dmft/analcatdata_dmft.tsv.gz",
         "licence": "MIT",
         "rule": "drop_zero_feature_rows",
-        "n_rows": 787, "n_features": 4, "n_classes": 6,
+        "n_rows": 787,
+        "n_features": 4,
+        "n_classes": 6,
         "column_types": ["int", "int", "int", "int", "int"],
         "row_order": "source",
         "md5": "f88b41295eb5ab253b1c6616b596cb4f",
@@ -160,7 +161,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/balance_scale/balance_scale.tsv.gz",
         "licence": "MIT",
         "rule": "identity",
-        "n_rows": 625, "n_features": 4, "n_classes": 3,
+        "n_rows": 625,
+        "n_features": 4,
+        "n_classes": 3,
         "column_types": ["int", "int", "int", "int", "int"],
         "row_order": "source",
         "md5": "5f33cc3ffdec0ef717b6dc1be7ac7fa7",
@@ -174,7 +177,9 @@ SOURCES = {
         "url": "https://www.openml.org/d/21",
         "licence": "CC BY 4.0",
         "rule": "label_rank_encode_and_drop_rows",
-        "n_rows": 1727, "n_features": 6, "n_classes": 4,
+        "n_rows": 1727,
+        "n_features": 6,
+        "n_classes": 4,
         "column_types": ["int", "int", "int", "int", "int", "int", "int"],
         "row_order": "car_partition",
         "md5": "97bf85b5072577e87a02cacb66c8eb9a",
@@ -188,7 +193,9 @@ SOURCES = {
         "url": "https://www.openml.org/d/40711",
         "licence": "CC BY 4.0",
         "rule": "restore_one_based_codes",
-        "n_rows": 303, "n_features": 7, "n_classes": 5,
+        "n_rows": 303,
+        "n_features": 7,
+        "n_classes": 5,
         "column_types": ["int", "int", "int", "int", "int", "int", "int", "int"],
         "row_order": "source",
         "columns": ["sex", "cp", "fbs", "restecg", "exang", "slope", "thal", "class"],
@@ -204,8 +211,19 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/cloud/cloud.tsv.gz",
         "licence": "MIT",
         "rule": "identity",
-        "n_rows": 108, "n_features": 7, "n_classes": 4,
-        "column_types": ["float", "int", "float", "float", "float", "float", "float", "int"],
+        "n_rows": 108,
+        "n_features": 7,
+        "n_classes": 4,
+        "column_types": [
+            "float",
+            "int",
+            "float",
+            "float",
+            "float",
+            "float",
+            "float",
+            "int",
+        ],
         "row_order": "source",
         "md5": "6bcffdfbed79a79e70a16e66dd217430",
         "sha256": "d03ab81f7b789d40ebce609516c2414a8dd876757e6b95eb492c065ed96bb2c3",
@@ -218,7 +236,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/confidence/confidence.tsv.gz",
         "licence": "MIT",
         "rule": "identity",
-        "n_rows": 72, "n_features": 3, "n_classes": 6,
+        "n_rows": 72,
+        "n_features": 3,
+        "n_classes": 6,
         "column_types": ["float", "float", "float", "int"],
         "row_order": "source",
         "md5": "a208a47427e686367e02f9032a680a79",
@@ -232,8 +252,19 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/ecoli/ecoli.tsv.gz",
         "licence": "MIT",
         "rule": "relabel",
-        "n_rows": 327, "n_features": 7, "n_classes": 5,
-        "column_types": ["float", "float", "float", "float", "float", "float", "float", "int"],
+        "n_rows": 327,
+        "n_features": 7,
+        "n_classes": 5,
+        "column_types": [
+            "float",
+            "float",
+            "float",
+            "float",
+            "float",
+            "float",
+            "float",
+            "int",
+        ],
         "row_order": "source",
         "md5": "e2d1f30ef256664f51882edb65517ae1",
         "sha256": "de5e79ed372fa5bfb68d5c3dd345b9a45f0fce5162a3d1ac5ba96a254274c331",
@@ -246,7 +277,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/haberman/haberman.tsv.gz",
         "licence": "MIT",
         "rule": "relabel",
-        "n_rows": 306, "n_features": 3, "n_classes": 2,
+        "n_rows": 306,
+        "n_features": 3,
+        "n_classes": 2,
         "column_types": ["float", "int", "float", "int"],
         "row_order": "source",
         "md5": "2536765265b0a7098c255bfb21838a74",
@@ -260,7 +293,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/iris/iris.tsv.gz",
         "licence": "MIT",
         "rule": "identity",
-        "n_rows": 150, "n_features": 4, "n_classes": 3,
+        "n_rows": 150,
+        "n_features": 4,
+        "n_classes": 3,
         "column_types": ["float", "float", "float", "float", "int"],
         "row_order": "source",
         "md5": "e84cb3fd6f5c33a17c004010328dd158",
@@ -274,7 +309,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/led7/led7.tsv.gz",
         "licence": "MIT",
         "rule": "identity",
-        "n_rows": 3200, "n_features": 7, "n_classes": 10,
+        "n_rows": 3200,
+        "n_features": 7,
+        "n_classes": 10,
         "column_types": ["int", "int", "int", "int", "int", "int", "int", "int"],
         "row_order": "source",
         "md5": "c359e41fec1df6831c2b0de34f3f23b6",
@@ -288,7 +325,9 @@ SOURCES = {
         "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/new_thyroid/new_thyroid.tsv.gz",
         "licence": "MIT",
         "rule": "relabel",
-        "n_rows": 215, "n_features": 5, "n_classes": 3,
+        "n_rows": 215,
+        "n_features": 5,
+        "n_classes": 3,
         "column_types": ["float", "float", "float", "float", "float", "int"],
         "row_order": "source",
         "md5": "eddcbb606349436fe306ee46e5d93fb7",
@@ -298,27 +337,380 @@ SOURCES = {
 }
 
 CAR_TAIL = [
-    7, 16, 23, 29, 46, 49, 54, 56, 59, 60, 61, 62, 66, 67, 74, 77, 79, 84,
-    89, 90, 92, 94, 97, 101, 103, 114, 116, 120, 122, 124, 125, 127, 128, 130, 132, 135,
-    145, 152, 154, 157, 161, 172, 187, 189, 193, 195, 197, 210, 213, 233, 237, 239, 240, 241,
-    245, 247, 249, 258, 259, 262, 263, 266, 268, 270, 277, 292, 295, 298, 313, 324, 325, 329,
-    330, 338, 340, 345, 346, 351, 358, 359, 360, 363, 372, 374, 377, 379, 381, 382, 388, 389,
-    391, 409, 410, 413, 418, 420, 421, 431, 434, 436, 439, 442, 445, 448, 454, 455, 461, 466,
-    474, 478, 484, 486, 487, 491, 496, 499, 500, 504, 508, 509, 518, 533, 534, 546, 551, 559,
-    562, 563, 571, 574, 579, 587, 588, 589, 591, 599, 600, 619, 620, 626, 636, 641, 645, 652,
-    655, 658, 660, 667, 675, 683, 688, 691, 702, 710, 712, 713, 715, 720, 731, 733, 742, 748,
-    752, 754, 759, 761, 768, 769, 772, 773, 774, 791, 792, 793, 796, 800, 801, 804, 806, 817,
-    818, 819, 821, 828, 835, 836, 846, 847, 849, 854, 859, 862, 866, 882, 883, 896, 899, 900,
-    913, 919, 921, 930, 931, 935, 937, 951, 953, 955, 959, 972, 974, 976, 979, 982, 984, 994,
-    998, 1008, 1011, 1013, 1017, 1023, 1025, 1026, 1030, 1035, 1037, 1042, 1047, 1048, 1051, 1055, 1058, 1059,
-    1061, 1065, 1073, 1076, 1083, 1092, 1094, 1095, 1098, 1101, 1103, 1105, 1106, 1113, 1118, 1130, 1131, 1136,
-    1146, 1150, 1153, 1179, 1180, 1184, 1185, 1187, 1188, 1189, 1191, 1194, 1207, 1212, 1220, 1221, 1222, 1224,
-    1228, 1230, 1235, 1238, 1240, 1243, 1247, 1258, 1264, 1271, 1278, 1282, 1283, 1299, 1312, 1313, 1323, 1326,
-    1328, 1336, 1338, 1350, 1351, 1365, 1367, 1380, 1382, 1394, 1396, 1399, 1400, 1405, 1416, 1425, 1427, 1431,
-    1433, 1437, 1440, 1442, 1447, 1450, 1453, 1454, 1458, 1461, 1465, 1468, 1471, 1473, 1475, 1478, 1479, 1480,
-    1483, 1489, 1490, 1494, 1500, 1513, 1514, 1516, 1519, 1523, 1528, 1533, 1534, 1541, 1545, 1551, 1552, 1553,
-    1555, 1558, 1571, 1575, 1576, 1583, 1587, 1597, 1599, 1606, 1610, 1623, 1630, 1631, 1632, 1636, 1647, 1655,
-    1656, 1659, 1663, 1670, 1671, 1687, 1692, 1693, 1699, 1703, 1705, 1713, 1714, 1724
+    7,
+    16,
+    23,
+    29,
+    46,
+    49,
+    54,
+    56,
+    59,
+    60,
+    61,
+    62,
+    66,
+    67,
+    74,
+    77,
+    79,
+    84,
+    89,
+    90,
+    92,
+    94,
+    97,
+    101,
+    103,
+    114,
+    116,
+    120,
+    122,
+    124,
+    125,
+    127,
+    128,
+    130,
+    132,
+    135,
+    145,
+    152,
+    154,
+    157,
+    161,
+    172,
+    187,
+    189,
+    193,
+    195,
+    197,
+    210,
+    213,
+    233,
+    237,
+    239,
+    240,
+    241,
+    245,
+    247,
+    249,
+    258,
+    259,
+    262,
+    263,
+    266,
+    268,
+    270,
+    277,
+    292,
+    295,
+    298,
+    313,
+    324,
+    325,
+    329,
+    330,
+    338,
+    340,
+    345,
+    346,
+    351,
+    358,
+    359,
+    360,
+    363,
+    372,
+    374,
+    377,
+    379,
+    381,
+    382,
+    388,
+    389,
+    391,
+    409,
+    410,
+    413,
+    418,
+    420,
+    421,
+    431,
+    434,
+    436,
+    439,
+    442,
+    445,
+    448,
+    454,
+    455,
+    461,
+    466,
+    474,
+    478,
+    484,
+    486,
+    487,
+    491,
+    496,
+    499,
+    500,
+    504,
+    508,
+    509,
+    518,
+    533,
+    534,
+    546,
+    551,
+    559,
+    562,
+    563,
+    571,
+    574,
+    579,
+    587,
+    588,
+    589,
+    591,
+    599,
+    600,
+    619,
+    620,
+    626,
+    636,
+    641,
+    645,
+    652,
+    655,
+    658,
+    660,
+    667,
+    675,
+    683,
+    688,
+    691,
+    702,
+    710,
+    712,
+    713,
+    715,
+    720,
+    731,
+    733,
+    742,
+    748,
+    752,
+    754,
+    759,
+    761,
+    768,
+    769,
+    772,
+    773,
+    774,
+    791,
+    792,
+    793,
+    796,
+    800,
+    801,
+    804,
+    806,
+    817,
+    818,
+    819,
+    821,
+    828,
+    835,
+    836,
+    846,
+    847,
+    849,
+    854,
+    859,
+    862,
+    866,
+    882,
+    883,
+    896,
+    899,
+    900,
+    913,
+    919,
+    921,
+    930,
+    931,
+    935,
+    937,
+    951,
+    953,
+    955,
+    959,
+    972,
+    974,
+    976,
+    979,
+    982,
+    984,
+    994,
+    998,
+    1008,
+    1011,
+    1013,
+    1017,
+    1023,
+    1025,
+    1026,
+    1030,
+    1035,
+    1037,
+    1042,
+    1047,
+    1048,
+    1051,
+    1055,
+    1058,
+    1059,
+    1061,
+    1065,
+    1073,
+    1076,
+    1083,
+    1092,
+    1094,
+    1095,
+    1098,
+    1101,
+    1103,
+    1105,
+    1106,
+    1113,
+    1118,
+    1130,
+    1131,
+    1136,
+    1146,
+    1150,
+    1153,
+    1179,
+    1180,
+    1184,
+    1185,
+    1187,
+    1188,
+    1189,
+    1191,
+    1194,
+    1207,
+    1212,
+    1220,
+    1221,
+    1222,
+    1224,
+    1228,
+    1230,
+    1235,
+    1238,
+    1240,
+    1243,
+    1247,
+    1258,
+    1264,
+    1271,
+    1278,
+    1282,
+    1283,
+    1299,
+    1312,
+    1313,
+    1323,
+    1326,
+    1328,
+    1336,
+    1338,
+    1350,
+    1351,
+    1365,
+    1367,
+    1380,
+    1382,
+    1394,
+    1396,
+    1399,
+    1400,
+    1405,
+    1416,
+    1425,
+    1427,
+    1431,
+    1433,
+    1437,
+    1440,
+    1442,
+    1447,
+    1450,
+    1453,
+    1454,
+    1458,
+    1461,
+    1465,
+    1468,
+    1471,
+    1473,
+    1475,
+    1478,
+    1479,
+    1480,
+    1483,
+    1489,
+    1490,
+    1494,
+    1500,
+    1513,
+    1514,
+    1516,
+    1519,
+    1523,
+    1528,
+    1533,
+    1534,
+    1541,
+    1545,
+    1551,
+    1552,
+    1553,
+    1555,
+    1558,
+    1571,
+    1575,
+    1576,
+    1583,
+    1587,
+    1597,
+    1599,
+    1606,
+    1610,
+    1623,
+    1630,
+    1631,
+    1632,
+    1636,
+    1647,
+    1655,
+    1656,
+    1659,
+    1663,
+    1670,
+    1671,
+    1687,
+    1692,
+    1693,
+    1699,
+    1703,
+    1705,
+    1713,
+    1714,
+    1724,
 ]
 
 SKIN = {
@@ -327,7 +719,9 @@ SKIN = {
     "url": "https://archive.ics.uci.edu/static/public/229/skin+segmentation.zip",
     "mirror_data_id": 1502,
     "licence": "CC BY 4.0",
-    "n_rows": 245057, "n_features": 3, "n_classes": 2,
+    "n_rows": 245057,
+    "n_features": 3,
+    "n_classes": 2,
     "bytes": 3400818,
     "md5": "64ec30a3d91338593ecb62583526b93e",
     "sha256": "e30c0a845385dcc95a45c45ed263465674a49638e98ef740afd520769c7714a4",
@@ -338,8 +732,10 @@ SKIN = {
 # digests
 # ==========================================================================
 def digests(raw: bytes) -> dict:
-    return {"md5": hashlib.md5(raw).hexdigest(),
-            "sha256": hashlib.sha256(raw).hexdigest()}
+    return {
+        "md5": hashlib.md5(raw).hexdigest(),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+    }
 
 
 def matches(raw: bytes, spec: dict) -> bool:
@@ -355,8 +751,9 @@ def content_digest(frame) -> str:
     identifies the content of a file up to a permutation of its rows, and so
     separates a transformation error from an ordering error.
     """
-    rows = ["\t".join(format(float(v), ".10g") for v in row)
-            for row in frame.to_numpy()]
+    rows = [
+        "\t".join(format(float(v), ".10g") for v in row) for row in frame.to_numpy()
+    ]
     rows.sort()
     return hashlib.sha256("\n".join(rows).encode()).hexdigest()
 
@@ -453,7 +850,8 @@ def build(name: str, spec: dict):
             if list(frame.columns) != spec["columns"]:
                 raise RuntimeError(
                     f"unexpected column order {list(frame.columns)}, "
-                    f"expected {spec['columns']}")
+                    f"expected {spec['columns']}"
+                )
             for column in frame.columns:
                 frame[column] = frame[column].astype(float).astype(int)
             for column in spec["shift_plus_one"]:
@@ -497,8 +895,9 @@ def render_csv(frame, spec: dict) -> bytes:
 
     types = spec["column_types"]
     if len(types) != frame.shape[1]:
-        raise RuntimeError(f"column_types has {len(types)} entries for "
-                           f"{frame.shape[1]} columns")
+        raise RuntimeError(
+            f"column_types has {len(types)} entries for {frame.shape[1]} columns"
+        )
     out = pd.DataFrame(frame.to_numpy(), columns=range(frame.shape[1]))
     for index, kind in enumerate(types):
         out[index] = out[index].astype(int if kind == "int" else float)
@@ -511,11 +910,14 @@ def materialize(name: str, spec: dict) -> bytes:
     if frame.shape[0] != spec["n_rows"] or frame.shape[1] - 1 != spec["n_features"]:
         raise RuntimeError(
             f"unexpected shape {frame.shape[0]}x{frame.shape[1] - 1}, "
-            f"expected {spec['n_rows']}x{spec['n_features']}")
+            f"expected {spec['n_rows']}x{spec['n_features']}"
+        )
     if content_digest(frame) != spec["content_sha256"]:
-        raise RuntimeError("the transformed content does not match the "
-                           "expected digest (the source may have been "
-                           "re-released)")
+        raise RuntimeError(
+            "the transformed content does not match the "
+            "expected digest (the source may have been "
+            "re-released)"
+        )
     return render_csv(apply_row_order(frame, spec), spec)
 
 
@@ -534,8 +936,9 @@ def materialize_skin() -> bytes:
     try:
         frame = fetch_openml(SKIN["mirror_data_id"], as_string=False)
         rows = frame.to_numpy().astype(float).astype(int)
-        return ("\r\n".join("\t".join(str(v) for v in row) for row in rows)
-                + "\r\n").encode()
+        return (
+            "\r\n".join("\t".join(str(v) for v in row) for row in rows) + "\r\n"
+        ).encode()
     except Exception as exc:  # noqa: BLE001
         errors.append(f"OpenML mirror: {exc}")
 
@@ -557,8 +960,10 @@ def write(target: Path, raw: bytes) -> None:
 
 
 def row(name: str, spec: dict, status: str) -> str:
-    return (f"{name:<20}{spec['n_rows']:>7}{spec['n_features']:>6}"
-            f"{spec['n_classes']:>5}  {status}")
+    return (
+        f"{name:<20}{spec['n_rows']:>7}{spec['n_features']:>6}"
+        f"{spec['n_classes']:>5}  {status}"
+    )
 
 
 def blank_row(name: str, status: str) -> str:
@@ -572,16 +977,26 @@ def cmd_sources() -> int:
     print(f"{'dataset':<20}{'rows':>7}{'feat':>6}{'cls':>5}  {'licence':<12}source")
     print("-" * 96)
     for name, spec in SOURCES.items():
-        origin = (f"PMLB {spec['pmlb_name']}" if spec["repository"] == "PMLB"
-                  else f"OpenML id {spec['data_id']}")
+        origin = (
+            f"PMLB {spec['pmlb_name']}"
+            if spec["repository"] == "PMLB"
+            else f"OpenML id {spec['data_id']}"
+        )
         print(row(name, spec, f"{spec['licence']:<12}{origin}"))
-    print(row(SKIN["name"], SKIN,
-              f"{SKIN['licence']:<12}UCI id 229 (mirror: OpenML id "
-              f"{SKIN['mirror_data_id']})"))
+    print(
+        row(
+            SKIN["name"],
+            SKIN,
+            f"{SKIN['licence']:<12}UCI id 229 (mirror: OpenML id "
+            f"{SKIN['mirror_data_id']})",
+        )
+    )
     print("-" * 96)
-    print("Transformations, row order and citations: see the docstring of this "
-          "file\n(`python scripts/fetch_datasets.py --help`) and "
-          "`docs/datasets.md`.")
+    print(
+        "Transformations, row order and citations: see the docstring of this "
+        "file\n(`python scripts/fetch_datasets.py --help`) and "
+        "`docs/datasets.md`."
+    )
     return 0
 
 
@@ -614,8 +1029,10 @@ def cmd_check(outdir: Path, names: list, want_skin: bool) -> int:
 
     print("-" * 60)
     if failures:
-        print(f"{failures} file(s) missing or altered. Run "
-              f"`python scripts/fetch_datasets.py` to (re)build them.")
+        print(
+            f"{failures} file(s) missing or altered. Run "
+            f"`python scripts/fetch_datasets.py` to (re)build them."
+        )
         return 1
     print("Every file is present and matches the expected digest.")
     return 0
@@ -645,8 +1062,11 @@ def cmd_fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
             continue
 
         if not matches(raw, spec):
-            print(blank_row(name, f"DIGEST MISMATCH (got md5 "
-                                  f"{digests(raw)['md5'][:12]}...)"))
+            print(
+                blank_row(
+                    name, f"DIGEST MISMATCH (got md5 {digests(raw)['md5'][:12]}...)"
+                )
+            )
             failures += 1
             continue
 
@@ -655,8 +1075,10 @@ def cmd_fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
 
     if failures:
         print("-" * 60)
-        print(f"{failures} dataset(s) could not be reproduced; nothing was "
-              f"written to {outdir}.")
+        print(
+            f"{failures} dataset(s) could not be reproduced; nothing was "
+            f"written to {outdir}."
+        )
         return 1
 
     for target, raw in built.items():
@@ -672,7 +1094,8 @@ def cmd_fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
                 raw = materialize_skin()
                 if not matches(raw, SKIN):
                     raise RuntimeError(
-                        f"digest mismatch (got md5 {digests(raw)['md5'][:12]}...)")
+                        f"digest mismatch (got md5 {digests(raw)['md5'][:12]}...)"
+                    )
                 write(target, raw)
                 print(row(SKIN["name"], SKIN, "downloaded, digests OK"))
             except Exception as exc:  # noqa: BLE001
@@ -683,10 +1106,12 @@ def cmd_fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
     if built:
         print(f"{len(built)} file(s) written to {outdir}.")
     if skin_failed:
-        print("Skin Segmentation could not be fetched from UCI nor from its "
-              "OpenML mirror.\nThe eleven small datasets are in place: "
-              "Table 7 and Component A of the harness\ncan run; only "
-              "`run_benchmarks.py B` needs this file.")
+        print(
+            "Skin Segmentation could not be fetched from UCI nor from its "
+            "OpenML mirror.\nThe eleven small datasets are in place: "
+            "Table 7 and Component A of the harness\ncan run; only "
+            "`run_benchmarks.py B` needs this file."
+        )
         return 1
     print("Every dataset is in place and matches its digest byte for byte.")
     return 0
@@ -694,22 +1119,37 @@ def cmd_fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--outdir", default=None,
-                        help="destination directory (default: datasets/)")
-    parser.add_argument("--datasets", nargs="+", default=None,
-                        help="restrict to these dataset names")
-    parser.add_argument("--skip-skin", action="store_true",
-                        help="do not fetch Skin Segmentation")
-    parser.add_argument("--only-skin", action="store_true",
-                        help="fetch Skin Segmentation and nothing else")
-    parser.add_argument("--force", action="store_true",
-                        help="re-download the files that are already correct")
-    parser.add_argument("--check", action="store_true",
-                        help="verify the files on disk, without downloading")
-    parser.add_argument("--sources", action="store_true",
-                        help="print the source and licence of every file")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--outdir", default=None, help="destination directory (default: datasets/)"
+    )
+    parser.add_argument(
+        "--datasets", nargs="+", default=None, help="restrict to these dataset names"
+    )
+    parser.add_argument(
+        "--skip-skin", action="store_true", help="do not fetch Skin Segmentation"
+    )
+    parser.add_argument(
+        "--only-skin",
+        action="store_true",
+        help="fetch Skin Segmentation and nothing else",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="re-download the files that are already correct",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify the files on disk, without downloading",
+    )
+    parser.add_argument(
+        "--sources",
+        action="store_true",
+        help="print the source and licence of every file",
+    )
     args = parser.parse_args()
 
     if args.sources:
@@ -722,8 +1162,9 @@ def main() -> int:
     names = [] if args.only_skin else (args.datasets or list(SOURCES))
     unknown = [n for n in names if n not in SOURCES]
     if unknown:
-        parser.error(f"unknown dataset(s): {', '.join(unknown)}; "
-                     f"available: {', '.join(SOURCES)}")
+        parser.error(
+            f"unknown dataset(s): {', '.join(unknown)}; available: {', '.join(SOURCES)}"
+        )
     want_skin = not args.skip_skin and (args.only_skin or args.datasets is None)
 
     if args.check:

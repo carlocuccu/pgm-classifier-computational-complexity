@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Empirical benchmarks for the section "Some empirical evidence" of
 
@@ -67,6 +66,7 @@ from dataclasses import dataclass, field
 from math import comb
 from pathlib import Path
 
+
 # ----------------------------------------------------------------------------
 # Thread pinning must happen before numpy / torch are imported.
 # ----------------------------------------------------------------------------
@@ -78,10 +78,16 @@ def _pin_threads_from_argv() -> int:
             n = int(argv[i + 1])
         elif a.startswith("--threads="):
             n = int(a.split("=", 1)[1])
-    for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
-                "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    for var in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+    ):
         os.environ.setdefault(var, str(n))
     return n
+
 
 N_THREADS = _pin_threads_from_argv()
 
@@ -100,16 +106,24 @@ HARMONIZE_TOL = True
 
 # Copy numbers of Table 7 of the manuscript (accuracy saturation point).
 TABLE7_C = {
-    "analcatdata_dmft": 4, "balance-scale": 1, "car": 9, "cleveland-nominal": 1,
-    "cloud": 1, "confidence": 5, "ecoli": 8, "haberman": 1, "iris": 2,
-    "led7": 4, "new-thyroid": 5,
+    "analcatdata_dmft": 4,
+    "balance-scale": 1,
+    "car": 9,
+    "cleveland-nominal": 1,
+    "cloud": 1,
+    "confidence": 5,
+    "ecoli": 8,
+    "haberman": 1,
+    "iris": 2,
+    "led7": 4,
+    "new-thyroid": 5,
 }
 # Default Component A selection: two all-True, two partial, two all-False
 # (regimes according to Table 7).
 DEFAULT_A = ["balance-scale", "haberman", "iris", "led7", "ecoli", "car"]
 
 SKIN_FILE = "Skin_NonSkin.txt"
-SKIN_C = 5            # d_raw = 3 -> d_enc = 4, dsym = C(8,5) = 56
+SKIN_C = 5  # d_raw = 3 -> d_enc = 4, dsym = C(8,5) = 56
 SKIN_TEST = 2000
 DEFAULT_SWEEP = [250, 500, 1000, 1750, 3000, 5000, 8000]
 
@@ -134,6 +148,7 @@ class PeakRSS:
                 return int(fh.read().split()[1]) * self._page
         except OSError:  # non-Linux fallback
             import resource
+
             return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
 
     def _run(self):
@@ -188,8 +203,8 @@ def timed(fn, reps: int, warmup: int = 1):
         result = fn()
     times = []
     for _ in range(reps):
-        result = None      # free the previous repetition's model
-        gc.collect()       # before the timer, so collection does not pollute it
+        result = None  # free the previous repetition's model
+        gc.collect()  # before the timer, so collection does not pollute it
         t0 = time.perf_counter()
         result = fn()
         times.append(time.perf_counter() - t0)
@@ -220,11 +235,13 @@ def stratified_split(y, test_frac=0.2, seed=42):
             idx = np.flatnonzero(y == cls)
             rng.shuffle(idx)
             k = max(1, int(round(len(idx) * test_frac)))
-            te.extend(idx[:k]); tr.extend(idx[k:])
+            te.extend(idx[:k])
+            tr.extend(idx[k:])
         return np.array(sorted(tr)), np.array(sorted(te))
 
-    tr, te = train_test_split(index, test_size=test_frac, shuffle=True,
-                              stratify=y, random_state=seed)
+    tr, te = train_test_split(
+        index, test_size=test_frac, shuffle=True, stratify=y, random_state=seed
+    )
     return np.sort(tr), np.sort(te)
 
 
@@ -254,7 +271,8 @@ def load_dataset(name: str):
         raise FileNotFoundError(
             f"{path} not found. The datasets are not carried in the "
             f"repository; run `python scripts/fetch_datasets.py` to download "
-            f"and rebuild them.")
+            f"and rebuild them."
+        )
     raw = np.loadtxt(path, delimiter="\t" if name == "skin" else ",")
     return raw[:, :-1].astype(np.float64), raw[:, -1]
 
@@ -271,8 +289,8 @@ def thresholds(N, d_raw, c, l, r_g=None):
     return {
         "dsym": ds,
         "tr_time_thr": l ** (1 / 3) * ds,
-        "tr_mem_thr": ds ** 2,
-        "pred_thr": l * ds ** 2 / (d_raw + 1 + r),
+        "tr_mem_thr": ds**2,
+        "pred_thr": l * ds**2 / (d_raw + 1 + r),
     }
 
 
@@ -290,12 +308,14 @@ def get_classifiers(include_cpgm=False):
                 continue
         raise ModuleNotFoundError(
             f"cannot import {modname!r}: expected qunica/classifiers/{modname}.py "
-            f"(or qunica/{modname}.py) under the project root {ROOT}")
+            f"(or qunica/{modname}.py) under the project root {ROOT}"
+        )
 
     kmod = load("KPGMC_Low_Rank")
     rmod = load("PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank")
-    KPGM = getattr(kmod, "KPGM")
-    RcPGM = getattr(rmod, "PGMHQC_gpu_cpu_dtype")
+    KPGM = kmod.KPGM
+    RcPGM = rmod.PGMHQC_gpu_cpu_dtype
+
     def rc_tol(n_train):
         # Scale-consistent pseudo-inverse threshold. The k-PGM truncates the
         # spectrum of G^c = Phi Phi^T at BASE_TOL, whereas the reduced and
@@ -311,15 +331,20 @@ def get_classifiers(include_cpgm=False):
         # factors and this rescaling would no longer be exact.
         return (BASE_TOL / n_train) if (HARMONIZE_TOL and n_train) else BASE_TOL
 
-    out = {"kpgm": lambda c, n_train=None: KPGM(n_copies=c, encoding="amplit",
-                                                tol=BASE_TOL),
-           "rcpgm": lambda c, n_train=None: RcPGM(n_copies=c, encoding="amplit",
-                                                  tol=rc_tol(n_train))}
+    out = {
+        "kpgm": lambda c, n_train=None: KPGM(
+            n_copies=c, encoding="amplit", tol=BASE_TOL
+        ),
+        "rcpgm": lambda c, n_train=None: RcPGM(
+            n_copies=c, encoding="amplit", tol=rc_tol(n_train)
+        ),
+    }
     if include_cpgm:
         cmod = load("PGMHQC_gpu_cpu_dtype")
-        CPGM = getattr(cmod, "PGMHQC_gpu_cpu_dtype")
-        out["cpgm"] = lambda c, n_train=None: CPGM(n_copies=c, encoding="amplit",
-                                                   tol=rc_tol(n_train))
+        CPGM = cmod.PGMHQC_gpu_cpu_dtype
+        out["cpgm"] = lambda c, n_train=None: CPGM(
+            n_copies=c, encoding="amplit", tol=rc_tol(n_train)
+        )
     return out
 
 
@@ -332,14 +357,21 @@ def rc_preprocessing_time(RcFactory, X_train, c, reps):
 
     def basis():
         est.d = X_train.shape[1] + 1  # encoded dimension (amplit)
-        est.occupation_numbers = sorted(est._enumerate_occupation_numbers(), reverse=True)
+        est.occupation_numbers = sorted(
+            est._enumerate_occupation_numbers(), reverse=True
+        )
         est.dsym = len(est.occupation_numbers)
         est.multinomial_factors = est._calculate_multinomial_factors()
         return est.dsym
 
     def mapping():
-        Xp = est.X_prime_func(X_train, X_train.shape[0]) if hasattr(est, "X_prime_func") \
-            else sys.modules[type(est).__module__].X_prime_func(est, X_train, X_train.shape[0])
+        Xp = (
+            est.X_prime_func(X_train, X_train.shape[0])
+            if hasattr(est, "X_prime_func")
+            else sys.modules[type(est).__module__].X_prime_func(
+                est, X_train, X_train.shape[0]
+            )
+        )
         return est.map_batch_efficiently(Xp)
 
     t_basis = timed(basis, reps)[:2]
@@ -415,30 +447,41 @@ def component_A(args):
         # eigh workspace, the sandwich temporaries), in float64.
         est_bytes = (2 * len(np.unique(y)) + 5) * ds * ds * 8
         if est_bytes > args.mem_limit_gb * 1e9:
-            print(f"[skip] {name}: estimated Rc-PGM footprint "
-                  f"{est_bytes/1e9:.1f} GB > --mem-limit-gb {args.mem_limit_gb}")
+            print(
+                f"[skip] {name}: estimated Rc-PGM footprint "
+                f"{est_bytes / 1e9:.1f} GB > --mem-limit-gb {args.mem_limit_gb}"
+            )
             continue
 
-        print(f"\n=== {name}: N={len(tr)}, d={X.shape[1]}, c={c}, "
-              f"l={len(np.unique(y))}, dsym={ds} ===")
+        print(
+            f"\n=== {name}: N={len(tr)}, d={X.shape[1]}, c={c}, "
+            f"l={len(np.unique(y))}, dsym={ds} ==="
+        )
         preds = {}
-        for method in (["kpgm", "rcpgm"] + (["cpgm"] if args.include_cpgm else [])):
+        for method in ["kpgm", "rcpgm"] + (["cpgm"] if args.include_cpgm else []):
             if method == "cpgm" and (X.shape[1] + 1) ** c > args.cpgm_dim_limit:
-                print(f"  [skip] c-PGM: d_enc^c = {(X.shape[1]+1)**c} too large")
+                print(f"  [skip] c-PGM: d_enc^c = {(X.shape[1] + 1) ** c} too large")
                 continue
-            cell, holder = measure(method, factories[method], c,
-                                   Xtr, ytr, Xte, yte, name, args.reps)
+            cell, holder = measure(
+                method, factories[method], c, Xtr, ytr, Xte, yte, name, args.reps
+            )
             preds[method] = holder["yhat"]
-            print(f"  {method:6s} fit {cell.fit_mean*1e3:9.2f} ± {cell.fit_std*1e3:7.2f} ms | "
-                  f"pred {cell.pred_mean*1e3:8.2f} ± {cell.pred_std*1e3:6.2f} ms | "
-                  f"peak ΔRSS fit {cell.fit_rss_peak/1e6:8.1f} MB | "
-                  f"model {cell.model_bytes/1e6:8.1f} MB | acc {cell.accuracy:.3f}")
+            print(
+                f"  {method:6s} fit {cell.fit_mean * 1e3:9.2f} ± {cell.fit_std * 1e3:7.2f} ms | "
+                f"pred {cell.pred_mean * 1e3:8.2f} ± {cell.pred_std * 1e3:6.2f} ms | "
+                f"peak ΔRSS fit {cell.fit_rss_peak / 1e6:8.1f} MB | "
+                f"model {cell.model_bytes / 1e6:8.1f} MB | acc {cell.accuracy:.3f}"
+            )
             rows.append(cell)
 
         # Rc-PGM preprocessing, timed standalone
-        (tb, sb), (tm, sm) = rc_preprocessing_time(factories["rcpgm"], Xtr, c, args.reps)
-        print(f"  rcpgm  preprocessing: basis+factors {tb*1e3:.2f} ± {sb*1e3:.2f} ms | "
-              f"encode+map {tm*1e3:.2f} ± {sm*1e3:.2f} ms")
+        (tb, sb), (tm, sm) = rc_preprocessing_time(
+            factories["rcpgm"], Xtr, c, args.reps
+        )
+        print(
+            f"  rcpgm  preprocessing: basis+factors {tb * 1e3:.2f} ± {sb * 1e3:.2f} ms | "
+            f"encode+map {tm * 1e3:.2f} ± {sm * 1e3:.2f} ms"
+        )
 
         # Equivalence check
         if "kpgm" in preds and "rcpgm" in preds:
@@ -446,19 +489,31 @@ def component_A(args):
             if agree == 1.0:
                 status = "OK (identical)"
             elif agree > 0.99:
-                status = ("near-identical; the residual mismatches come from the "
-                          "pseudo-inverse truncation at near-threshold eigenvalues "
-                          "-- set HARMONIZE_TOL=True for exact agreement")
+                status = (
+                    "near-identical; the residual mismatches come from the "
+                    "pseudo-inverse truncation at near-threshold eigenvalues "
+                    "-- set HARMONIZE_TOL=True for exact agreement"
+                )
             else:
                 status = "CHECK: large disagreement, the timings are not comparable"
-            print(f"  equivalence k-PGM vs Rc-PGM: argmax agreement {agree:.4f}  [{status}]")
-            meta.append({"dataset": name, "argmax_agreement": agree,
-                         "rc_prep_basis_s": tb, "rc_prep_map_s": tm, **info})
+            print(
+                f"  equivalence k-PGM vs Rc-PGM: argmax agreement {agree:.4f}  [{status}]"
+            )
+            meta.append(
+                {
+                    "dataset": name,
+                    "argmax_agreement": agree,
+                    "rc_prep_basis_s": tb,
+                    "rc_prep_map_s": tm,
+                    **info,
+                }
+            )
 
     write_rows(OUT_DIR / "componentA.csv", rows)
-    (OUT_DIR / "componentA_meta.json").write_text(json.dumps(
-        {"env": env_info(), "meta": meta}, indent=2))
-    print(f"\n[A] results -> {OUT_DIR/'componentA.csv'}")
+    (OUT_DIR / "componentA_meta.json").write_text(
+        json.dumps({"env": env_info(), "meta": meta}, indent=2)
+    )
+    print(f"\n[A] results -> {OUT_DIR / 'componentA.csv'}")
 
 
 # ----------------------------------------------------------------------------
@@ -469,14 +524,17 @@ def component_B(args):
     X, y = load_dataset("skin")
     d_raw, c, l = X.shape[1], SKIN_C, len(np.unique(y))
     rng_split = stratified_subsample(y, SKIN_TEST, args.seed)
-    mask = np.zeros(len(y), bool); mask[rng_split] = True
+    mask = np.zeros(len(y), bool)
+    mask[rng_split] = True
     Xte, yte = X[mask], y[mask]
     Xpool, ypool = X[~mask], y[~mask]
 
     info = thresholds(max(DEFAULT_SWEEP), d_raw, c, l)
-    print(f"[B] Skin: d={d_raw}, c={c}, l={l}, dsym={info['dsym']}  |  theoretical "
-          f"thresholds: train-time N*≈{info['tr_time_thr']:.0f}, "
-          f"train-mem N*={info['tr_mem_thr']}, pred N*≈{info['pred_thr']:.0f}")
+    print(
+        f"[B] Skin: d={d_raw}, c={c}, l={l}, dsym={info['dsym']}  |  theoretical "
+        f"thresholds: train-time N*≈{info['tr_time_thr']:.0f}, "
+        f"train-mem N*={info['tr_mem_thr']}, pred N*≈{info['pred_thr']:.0f}"
+    )
 
     grid = [n for n in (args.sweep or DEFAULT_SWEEP) if n <= args.nmax]
     rows = []
@@ -485,19 +543,38 @@ def component_B(args):
         Xtr, ytr = Xpool[idx], ypool[idx]
         print(f"\n--- N = {len(idx)} ---")
         for method in ("kpgm", "rcpgm"):
-            cell, _ = measure(method, factories[method], c,
-                              Xtr, ytr, Xte, yte, f"skin_N{len(idx)}", args.reps)
-            print(f"  {method:6s} fit {cell.fit_mean:9.4f} ± {cell.fit_std:7.4f} s | "
-                  f"pred {cell.pred_mean:8.4f} ± {cell.pred_std:6.4f} s | "
-                  f"peak ΔRSS fit {cell.fit_rss_peak/1e6:8.1f} MB | "
-                  f"model {cell.model_bytes/1e6:8.1f} MB | acc {cell.accuracy:.4f}")
+            cell, _ = measure(
+                method,
+                factories[method],
+                c,
+                Xtr,
+                ytr,
+                Xte,
+                yte,
+                f"skin_N{len(idx)}",
+                args.reps,
+            )
+            print(
+                f"  {method:6s} fit {cell.fit_mean:9.4f} ± {cell.fit_std:7.4f} s | "
+                f"pred {cell.pred_mean:8.4f} ± {cell.pred_std:6.4f} s | "
+                f"peak ΔRSS fit {cell.fit_rss_peak / 1e6:8.1f} MB | "
+                f"model {cell.model_bytes / 1e6:8.1f} MB | acc {cell.accuracy:.4f}"
+            )
             rows.append(cell)
 
     write_rows(OUT_DIR / "componentB.csv", rows)
-    (OUT_DIR / "componentB_meta.json").write_text(json.dumps(
-        {"env": env_info(), "thresholds": info, "grid": grid,
-         "test_size": int(mask.sum())}, indent=2))
-    print(f"\n[B] results -> {OUT_DIR/'componentB.csv'}")
+    (OUT_DIR / "componentB_meta.json").write_text(
+        json.dumps(
+            {
+                "env": env_info(),
+                "thresholds": info,
+                "grid": grid,
+                "test_size": int(mask.sum()),
+            },
+            indent=2,
+        )
+    )
+    print(f"\n[B] results -> {OUT_DIR / 'componentB.csv'}")
     try:
         plot_B(rows, info)
     except Exception as exc:  # matplotlib optional
@@ -514,7 +591,7 @@ def _log_ticks(axis, lo, hi):
     labels, which are already plentiful. Both get unlabelled minor ticks at
     every 2..9, so intermediate values can be interpolated by eye.
     """
-    from matplotlib.ticker import LogLocator, NullFormatter, FuncFormatter
+    from matplotlib.ticker import FuncFormatter, LogLocator, NullFormatter
 
     decades = math.log10(hi) - math.log10(lo) if lo > 0 and hi > lo else 0.0
     subs = (1.0,) if decades > 3.0 else (1.0, 2.0, 5.0)
@@ -526,20 +603,22 @@ def _log_ticks(axis, lo, hi):
             text = f"{value:.10g}"
             return text
         exponent = int(round(math.log10(value)))
-        mantissa = value / 10.0 ** exponent
+        mantissa = value / 10.0**exponent
         if abs(mantissa - 1.0) < 1e-9:
             return f"$10^{{{exponent}}}$"
         return f"${mantissa:.10g}\\times10^{{{exponent}}}$"
 
     axis.set_major_locator(LogLocator(base=10.0, subs=subs, numticks=32))
     axis.set_major_formatter(FuncFormatter(fmt))
-    axis.set_minor_locator(LogLocator(base=10.0, subs=tuple(range(2, 10)),
-                                      numticks=100))
+    axis.set_minor_locator(
+        LogLocator(base=10.0, subs=tuple(range(2, 10)), numticks=100)
+    )
     axis.set_minor_formatter(NullFormatter())
 
 
 def plot_B(rows, info):
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -555,34 +634,52 @@ def plot_B(rows, info):
         """First N at which the k-PGM curve rises above the Rc-PGM one."""
         xs, yk = series("kpgm", attr)
         _, yr = series("rcpgm", attr)
-        diff = [math.log(a) - math.log(b) for a, b in zip(yk, yr)]
+        diff = [math.log(a) - math.log(b) for a, b in zip(yk, yr, strict=True)]
         for i in range(len(xs) - 1):
             if diff[i] < 0 <= diff[i + 1]:
                 t = -diff[i] / (diff[i + 1] - diff[i])
-                return math.exp(math.log(xs[i]) + t * (math.log(xs[i + 1]) - math.log(xs[i])))
+                return math.exp(
+                    math.log(xs[i]) + t * (math.log(xs[i + 1]) - math.log(xs[i]))
+                )
         return None
 
     # The stored model of the k-PGM is the O(N (d + r_{G^c})) term that governs its
     # PREDICTION cost, so the middle panel is compared with the prediction
     # threshold, not with the training-memory one.
-    panels = [("fit_mean", "training time [s]", info["tr_time_thr"]),
-              ("model_bytes", "stored model memory [bytes]", info["pred_thr"]),
-              ("pred_mean", "prediction time [s]", info["pred_thr"])]
+    panels = [
+        ("fit_mean", "training time [s]", info["tr_time_thr"]),
+        ("model_bytes", "stored model memory [bytes]", info["pred_thr"]),
+        ("pred_mean", "prediction time [s]", info["pred_thr"]),
+    ]
 
     fig, axes = plt.subplots(1, 3, figsize=(13.5, 4))
-    for ax, (attr, label, thr) in zip(axes, panels):
-        for method, name, color in (("kpgm", "k-PGM", "#C00000"),
-                                    ("rcpgm", "Rc-PGM", "#1E7B34")):
+    for ax, (attr, label, thr) in zip(axes, panels, strict=True):
+        for method, name, color in (
+            ("kpgm", "k-PGM", "#C00000"),
+            ("rcpgm", "Rc-PGM", "#1E7B34"),
+        ):
             xs, ys = series(method, attr)
             ax.plot(xs, ys, "o-", color=color, label=name)
-        ax.axvline(thr, color="#1F4E79", ls="--", lw=1,
-                   label=f"theoretical N*$\\approx${thr:.0f}")
+        ax.axvline(
+            thr,
+            color="#1F4E79",
+            ls="--",
+            lw=1,
+            label=f"theoretical N*$\\approx${thr:.0f}",
+        )
         emp = crossing(attr)
         if emp is not None:
-            ax.axvline(emp, color="#1F4E79", ls=":", lw=1.2,
-                       label=f"empirical N$\\approx${emp:.0f}")
-        ax.set_xscale("log"); ax.set_yscale("log")
-        ax.set_xlabel("N (training samples)"); ax.set_ylabel(label)
+            ax.axvline(
+                emp,
+                color="#1F4E79",
+                ls=":",
+                lw=1.2,
+                label=f"empirical N$\\approx${emp:.0f}",
+            )
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel("N (training samples)")
+        ax.set_ylabel(label)
         _log_ticks(ax.yaxis, *ax.get_ylim())
         ax.legend(fontsize=8)
         ax.grid(which="major", alpha=0.3)
@@ -606,8 +703,10 @@ def replot_B():
     csv_path = OUT_DIR / "componentB.csv"
     meta_path = OUT_DIR / "componentB_meta.json"
     if not csv_path.exists() or not meta_path.exists():
-        raise SystemExit(f"{csv_path.name} and {meta_path.name} are both needed; "
-                         f"run `python run_benchmarks.py B` first.")
+        raise SystemExit(
+            f"{csv_path.name} and {meta_path.name} are both needed; "
+            f"run `python run_benchmarks.py B` first."
+        )
 
     numeric = {"N", "d", "c", "l", "fit_rss_peak", "pred_rss_peak", "model_bytes"}
     rows = []
@@ -625,8 +724,10 @@ def replot_B():
 
     info = json.loads(meta_path.read_text())["thresholds"]
     plot_B(rows, info)
-    print(f"[replot] redrawn from {csv_path} ({len(rows)} rows); "
-          f"the measurements were not touched.")
+    print(
+        f"[replot] redrawn from {csv_path} ({len(rows)} rows); "
+        f"the measurements were not touched."
+    )
     return 0
 
 
@@ -657,13 +758,15 @@ class _MockPGM:
     def predict(self, X):
         W = (self.Xp_ @ self._enc(X).T) ** self.n_copies
         V = self.E_ @ (self.lam_[:, None] * (self.E_.T @ W))
-        scores = np.stack([np.sum(V[self.y_ == k] ** 2, axis=0)
-                           for k in range(len(self.classes_))])
+        scores = np.stack(
+            [np.sum(V[self.y_ == k] ** 2, axis=0) for k in range(len(self.classes_))]
+        )
         return self.classes_[np.argmax(scores, axis=0)]
 
     # attributes probed by rc_preprocessing_time
     def _enumerate_occupation_numbers(self):
         from itertools import combinations_with_replacement
+
         out = []
         for raw in combinations_with_replacement(range(self.d), self.n_copies):
             t = [0] * self.d
@@ -674,44 +777,63 @@ class _MockPGM:
 
     def _calculate_multinomial_factors(self):
         from math import factorial
-        return np.array([math.sqrt(factorial(self.n_copies) /
-                                   np.prod([factorial(n) for n in t]))
-                         for t in self.occupation_numbers])
+
+        return np.array(
+            [
+                math.sqrt(factorial(self.n_copies) / np.prod([factorial(n) for n in t]))
+                for t in self.occupation_numbers
+            ]
+        )
 
     def X_prime_func(self, X, m):
         return self._enc(X)
 
     def map_batch_efficiently(self, Xp):
-        return np.stack([f * np.prod(Xp ** np.array(t), axis=1)
-                         for t, f in zip(self.occupation_numbers,
-                                         self.multinomial_factors)], axis=1)
+        return np.stack(
+            [
+                f * np.prod(Xp ** np.array(t), axis=1)
+                for t, f in zip(
+                    self.occupation_numbers,
+                    self.multinomial_factors,
+                    strict=True,
+                )
+            ],
+            axis=1,
+        )
 
 
 def selftest(args):
     print("[selftest] synthetic data, numpy mock classifiers (no torch/qunica)")
     rng = np.random.default_rng(0)
-    X = rng.random((240, 3)); y = (X @ [1.0, -0.7, 0.4] > 0.35).astype(int)
+    X = rng.random((240, 3))
+    y = (X @ [1.0, -0.7, 0.4] > 0.35).astype(int)
     tr, te = stratified_split(y, 0.2, 0)
-    factories = {"kpgm": lambda c, n_train=None: _MockPGM(c, "kpgm"),
-                 "rcpgm": lambda c, n_train=None: _MockPGM(c, "rcpgm")}
+    factories = {
+        "kpgm": lambda c, n_train=None: _MockPGM(c, "kpgm"),
+        "rcpgm": lambda c, n_train=None: _MockPGM(c, "rcpgm"),
+    }
     preds = {}
     for m in ("kpgm", "rcpgm"):
-        cell, holder = measure(m, factories[m], 3, X[tr], y[tr], X[te], y[te],
-                               "synthetic", reps=3)
+        cell, holder = measure(
+            m, factories[m], 3, X[tr], y[tr], X[te], y[te], "synthetic", reps=3
+        )
         preds[m] = holder["yhat"]
         assert cell.fit_mean > 0 and cell.model_bytes > 0
-        print(f"  {m}: fit {cell.fit_mean*1e3:.2f} ms, pred {cell.pred_mean*1e3:.2f} ms, "
-              f"model {cell.model_bytes/1e3:.1f} kB, acc {cell.accuracy:.3f}")
+        print(
+            f"  {m}: fit {cell.fit_mean * 1e3:.2f} ms, pred {cell.pred_mean * 1e3:.2f} ms, "
+            f"model {cell.model_bytes / 1e3:.1f} kB, acc {cell.accuracy:.3f}"
+        )
     agree = float(np.mean(preds["kpgm"] == preds["rcpgm"]))
     (tb, sb), (tm, sm) = rc_preprocessing_time(factories["rcpgm"], X[tr], 3, 3)
-    print(f"  preprocessing basis {tb*1e3:.3f} ms, mapping {tm*1e3:.3f} ms")
+    print(f"  preprocessing basis {tb * 1e3:.3f} ms, mapping {tm * 1e3:.3f} ms")
     print(f"  argmax agreement (mock): {agree:.3f}")
     th = thresholds(500, 3, 5, 2)
     assert th["dsym"] == comb(8, 5) == 56 and th["tr_mem_thr"] == 3136
-    write_rows(OUT_DIR / "selftest.csv",
-               [Cell("kpgm", "synthetic", len(tr), 3, 3, 2)])
-    print("[selftest] harness OK; thresholds OK (dsym=56, N*_mem=3136); "
-          f"CSV written under {OUT_DIR}/")
+    write_rows(OUT_DIR / "selftest.csv", [Cell("kpgm", "synthetic", len(tr), 3, 3, 2)])
+    print(
+        "[selftest] harness OK; thresholds OK (dsym=56, N*_mem=3136); "
+        f"CSV written under {OUT_DIR}/"
+    )
 
 
 # ----------------------------------------------------------------------------
@@ -719,9 +841,22 @@ def selftest(args):
 # ----------------------------------------------------------------------------
 def write_rows(path: Path, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["method", "dataset", "N", "d", "c", "l", "fit_mean", "fit_std",
-              "pred_mean", "pred_std", "fit_rss_peak", "pred_rss_peak",
-              "model_bytes", "accuracy"]
+    fields = [
+        "method",
+        "dataset",
+        "N",
+        "d",
+        "c",
+        "l",
+        "fit_mean",
+        "fit_std",
+        "pred_mean",
+        "pred_std",
+        "fit_rss_peak",
+        "pred_rss_peak",
+        "model_bytes",
+        "accuracy",
+    ]
     with open(path, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=fields)
         w.writeheader()
@@ -730,13 +865,19 @@ def write_rows(path: Path, rows):
 
 
 def env_info():
-    info = {"python": sys.version.split()[0], "platform": platform.platform(),
-            "cpu_count": os.cpu_count(), "threads": N_THREADS,
-            "numpy": np.__version__,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "base_tol": BASE_TOL, "harmonize_tol": HARMONIZE_TOL}
+    info = {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "cpu_count": os.cpu_count(),
+        "threads": N_THREADS,
+        "numpy": np.__version__,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "base_tol": BASE_TOL,
+        "harmonize_tol": HARMONIZE_TOL,
+    }
     try:
         import torch
+
         info["torch"] = torch.__version__
     except ImportError:
         info["torch"] = None
@@ -745,16 +886,21 @@ def env_info():
 
 # ----------------------------------------------------------------------------
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("component", choices=["A", "B", "all", "selftest", "replot"])
     ap.add_argument("--reps", type=int, default=5)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--threads", type=int, default=1)
-    ap.add_argument("--datasets", nargs="+", default=DEFAULT_A,
-                    choices=sorted(TABLE7_C))
-    ap.add_argument("--include-cpgm", action="store_true",
-                    help="also run the explicit c-PGM where d_enc^c is small")
+    ap.add_argument(
+        "--datasets", nargs="+", default=DEFAULT_A, choices=sorted(TABLE7_C)
+    )
+    ap.add_argument(
+        "--include-cpgm",
+        action="store_true",
+        help="also run the explicit c-PGM where d_enc^c is small",
+    )
     ap.add_argument("--cpgm-dim-limit", type=int, default=4100)
     ap.add_argument("--mem-limit-gb", type=float, default=8.0)
     ap.add_argument("--nmax", type=int, default=8000)

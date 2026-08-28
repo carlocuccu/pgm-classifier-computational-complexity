@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Regenerate every number quoted in the "Runtime and memory benchmarks" subsection.
 
 The subsection reports a table of measurements plus a number of derived
@@ -64,8 +63,10 @@ def bold(text: str, is_best: bool) -> str:
 # loading
 # --------------------------------------------------------------------------
 def load(results: Path):
-    a = {(r["method"], r["dataset"]): r
-         for r in csv.DictReader((results / "componentA.csv").open())}
+    a = {
+        (r["method"], r["dataset"]): r
+        for r in csv.DictReader((results / "componentA.csv").open())
+    }
     a_meta = json.loads((results / "componentA_meta.json").read_text())
     b = list(csv.DictReader((results / "componentB.csv").open()))
     b_meta = json.loads((results / "componentB_meta.json").read_text())
@@ -83,14 +84,19 @@ def component_a_table(a, a_meta) -> str:
             continue
         k, r = a[("kpgm", name)], a[("rcpgm", name)]
         cells = []
-        for field, formatter in (("fit_mean", fmt_time),
-                                 ("pred_mean", fmt_time),
-                                 ("model_bytes", fmt_bytes)):
+        for field, formatter in (
+            ("fit_mean", fmt_time),
+            ("pred_mean", fmt_time),
+            ("model_bytes", fmt_bytes),
+        ):
             kv, rv = float(k[field]), float(r[field])
             cells.append(bold(formatter(kv), kv < rv))
             cells.append(bold(formatter(rv), rv < kv))
-        lines.append(f"    {name.replace('_', ' ')} & {k['N']} & {dsym[name]} & "
-                     + " & ".join(cells) + r" \\")
+        lines.append(
+            f"    {name.replace('_', ' ')} & {k['N']} & {dsym[name]} & "
+            + " & ".join(cells)
+            + r" \\"
+        )
     return "\n".join(lines)
 
 
@@ -100,32 +106,42 @@ def component_a_report(a, a_meta) -> None:
     print("=" * 78)
 
     worst = 0.0
-    for (method, name), row in a.items():
+    for row in a.values():
         for mean, std in (("fit_mean", "fit_std"), ("pred_mean", "pred_std")):
             worst = max(worst, float(row[std]) / float(row[mean]))
     print(f"\nCaption: largest std/mean over all cells = {100 * worst:.1f}%")
 
     print("\nRatios Rc-PGM / k-PGM (>1 means the Rc-PGM is the more expensive):")
-    print(f"  {'dataset':<16}{'training':>12}{'prediction':>12}{'model mem':>12}"
-          f"{'orders (train)':>16}")
+    print(
+        f"  {'dataset':<16}{'training':>12}{'prediction':>12}{'model mem':>12}"
+        f"{'orders (train)':>16}"
+    )
     for name in ORDER:
         if ("kpgm", name) not in a:
             continue
         k, r = a[("kpgm", name)], a[("rcpgm", name)]
-        ratios = [float(r[f]) / float(k[f])
-                  for f in ("fit_mean", "pred_mean", "model_bytes")]
-        print(f"  {name:<16}" + "".join(f"{x:>12.4g}" for x in ratios)
-              + f"{np.log10(ratios[0]):>+16.2f}")
+        ratios = [
+            float(r[f]) / float(k[f]) for f in ("fit_mean", "pred_mean", "model_bytes")
+        ]
+        print(
+            f"  {name:<16}"
+            + "".join(f"{x:>12.4g}" for x in ratios)
+            + f"{np.log10(ratios[0]):>+16.2f}"
+        )
 
     print("\nEquivalence check (argmax agreement k-PGM vs Rc-PGM):")
     for m in a_meta["meta"]:
         print(f"  {m['dataset']:<16}{m['argmax_agreement']:.6f}")
 
     env = a_meta["env"]
-    print(f"\nEnvironment: python {env['python']}, numpy {env['numpy']}, "
-          f"torch {env.get('torch')}, threads {env['threads']}")
-    print(f"Threshold convention: base_tol={env.get('base_tol')}, "
-          f"harmonize_tol={env.get('harmonize_tol')}")
+    print(
+        f"\nEnvironment: python {env['python']}, numpy {env['numpy']}, "
+        f"torch {env.get('torch')}, threads {env['threads']}"
+    )
+    print(
+        f"Threshold convention: base_tol={env.get('base_tol')}, "
+        f"harmonize_tol={env.get('harmonize_tol')}"
+    )
 
     print("\nLaTeX body of the measurement table:\n")
     print(component_a_table(a, a_meta))
@@ -168,25 +184,38 @@ def component_b_report(b, b_meta) -> None:
     }
 
     print("\nFitted log-log slopes (exponent of N):")
-    print(f"  {'quantity':<18}{'k-PGM full':>12}{'k-PGM upper':>13}"
-          f"{'Rc-PGM full':>13}{'Rc-PGM upper':>14}")
+    print(
+        f"  {'quantity':<18}{'k-PGM full':>12}{'k-PGM upper':>13}"
+        f"{'Rc-PGM full':>13}{'Rc-PGM upper':>14}"
+    )
     for label, (field, _) in series.items():
         kv = [float(x[field]) for x in k]
         rv = [float(x[field]) for x in r]
-        print(f"  {label:<18}{log_slope(N, kv):>12.2f}{log_slope(N, kv, half):>13.2f}"
-              f"{log_slope(N, rv):>13.2f}{log_slope(N, rv, half):>14.2f}")
-    print("  ('upper' = fitted over the upper half of the sweep; quote the range "
-          "you use)")
+        print(
+            f"  {label:<18}{log_slope(N, kv):>12.2f}{log_slope(N, kv, half):>13.2f}"
+            f"{log_slope(N, rv):>13.2f}{log_slope(N, rv, half):>14.2f}"
+        )
+    print(
+        "  ('upper' = fitted over the upper half of the sweep; quote the range you use)"
+    )
 
     thr = b_meta["thresholds"]
     print("\nCrossovers (N at which the k-PGM becomes the more expensive):")
     print(f"  {'quantity':<18}{'empirical':>12}{'theoretical':>14}  condition")
     pairs = [
         ("training time", "fit_mean", thr["tr_time_thr"], "N > l^(1/3) dsym"),
-        ("model memory", "model_bytes", thr["pred_thr"],
-         "N > l dsym^2 / (d + r_{G^c})   [prediction condition]"),
-        ("prediction time", "pred_mean", thr["pred_thr"],
-         "N > l dsym^2 / (d + r_{G^c})"),
+        (
+            "model memory",
+            "model_bytes",
+            thr["pred_thr"],
+            "N > l dsym^2 / (d + r_{G^c})   [prediction condition]",
+        ),
+        (
+            "prediction time",
+            "pred_mean",
+            thr["pred_thr"],
+            "N > l dsym^2 / (d + r_{G^c})",
+        ),
     ]
     for label, field, threshold, condition in pairs:
         kv = [float(x[field]) for x in k]
@@ -194,37 +223,53 @@ def component_b_report(b, b_meta) -> None:
         emp = crossover(N, kv, rv)
         emp_text = f"{emp:.0f}" if emp else "not in range"
         print(f"  {label:<18}{emp_text:>12}{threshold:>14.0f}  {condition}")
-    print(f"\n  Training-memory condition N > dsym^2 = {thr['tr_mem_thr']}: "
-          "not probed by the stored-model measurement.")
+    print(
+        f"\n  Training-memory condition N > dsym^2 = {thr['tr_mem_thr']}: "
+        "not probed by the stored-model measurement."
+    )
 
-    print("\nPeak RSS during training (the quantity the training-memory "
-          "condition bounds):")
+    print(
+        "\nPeak RSS during training (the quantity the training-memory "
+        "condition bounds):"
+    )
     print(f"  {'N':>6}{'k-PGM':>14}{'Rc-PGM':>14}")
-    for a_row, b_row in zip(k, r):
-        print(f"  {a_row['N']:>6}{fmt_bytes(float(a_row['fit_rss_peak'])):>14}"
-              f"{fmt_bytes(float(b_row['fit_rss_peak'])):>14}")
+    for a_row, b_row in zip(k, r, strict=True):
+        print(
+            f"  {a_row['N']:>6}{fmt_bytes(float(a_row['fit_rss_peak'])):>14}"
+            f"{fmt_bytes(float(b_row['fit_rss_peak'])):>14}"
+        )
 
     last_k, last_r = k[-1], r[-1]
     ratio = float(last_k["fit_mean"]) / float(last_r["fit_mean"])
-    print(f"\nAt N = {last_k['N']}: k-PGM training {float(last_k['fit_mean']):.0f} s "
-          f"against {float(last_r['fit_mean']):.2f} s for the Rc-PGM, "
-          f"a factor of {ratio:.0f}.")
+    print(
+        f"\nAt N = {last_k['N']}: k-PGM training {float(last_k['fit_mean']):.0f} s "
+        f"against {float(last_r['fit_mean']):.2f} s for the Rc-PGM, "
+        f"a factor of {ratio:.0f}."
+    )
 
-    same = all(a_row["accuracy"] == b_row["accuracy"] for a_row, b_row in zip(k, r))
+    same = all(
+        a_row["accuracy"] == b_row["accuracy"]
+        for a_row, b_row in zip(k, r, strict=True)
+    )
     print(f"Accuracies identical at every N: {same}")
 
     env = b_meta["env"]
-    print(f"\nEnvironment: python {env['python']}, numpy {env['numpy']}, "
-          f"torch {env.get('torch')}, threads {env['threads']}, "
-          f"base_tol={env.get('base_tol')}, harmonize_tol={env.get('harmonize_tol')}")
+    print(
+        f"\nEnvironment: python {env['python']}, numpy {env['numpy']}, "
+        f"torch {env.get('torch')}, threads {env['threads']}, "
+        f"base_tol={env.get('base_tol')}, harmonize_tol={env.get('harmonize_tol')}"
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--results", default=str(ROOT / "results_benchmark"),
-                        help="folder holding the harness output")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--results",
+        default=str(ROOT / "results_benchmark"),
+        help="folder holding the harness output",
+    )
     args = parser.parse_args()
 
     results = Path(args.results)

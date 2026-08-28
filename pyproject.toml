@@ -91,6 +91,12 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP", "B", "C4"]
 
+# E741 forbids `l` as a name. Here `l` is the number of classes, the symbol the
+# paper uses in every complexity expression; renaming it would break the
+# correspondence between the code and the equations it implements, which is
+# worth more than the ambiguity the rule guards against.
+ignore = ["E741"]
+
 [tool.ruff.lint.per-file-ignores]
 # The harness pins the BLAS thread count into the environment before numpy and
 # torch are imported; the imports are therefore deliberately not at the top.
