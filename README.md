@@ -41,6 +41,12 @@ None of that needs PyTorch: the harness imports it lazily, so the datasets, the
 self-test, the figure and most of the tests run without it. `make estimators`
 adds it when you want the classifiers themselves.
 
+`uv` is asked to use an interpreter it manages rather than whichever Python is
+on `PATH` (`python-preference = "only-managed"`). A pyenv or distribution build
+compiled without libffi has no `_ctypes`, numpy and scipy will not import on it,
+and the failure appears far from its cause; a project about reproducible
+environments should not inherit that lottery.
+
 `make` on its own lists everything the repository offers. Without `uv`, the
 classic path still works: `python -m venv .venv && pip install -r
 requirements.txt`, then run the scripts directly.

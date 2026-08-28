@@ -1038,7 +1038,31 @@ def cmd_check(outdir: Path, names: list, want_skin: bool) -> int:
     return 0
 
 
+def check_environment() -> None:
+    """Fail once, clearly, if the interpreter cannot do the work.
+
+    A CPython built without libffi has no `_ctypes`, and numpy and scipy fail
+    to import on it. Without this check the same message is repeated for every
+    dataset, which reads like eleven download failures rather than one broken
+    interpreter.
+    """
+    try:
+        import pandas  # noqa: F401
+        import sklearn  # noqa: F401
+    except ImportError as exc:
+        raise SystemExit(
+            f"this interpreter cannot import the libraries the script needs: {exc}\n"
+            f"  python:  {sys.executable}\n"
+            f"  version: {sys.version.split()[0]}\n"
+            "\nA 'No module named _ctypes' here means the interpreter was built "
+            "without libffi,\nwhich numpy and scipy need. Let uv provide one "
+            "instead:\n\n"
+            "    rm -rf .venv && uv python install 3.12 && uv sync --group dev\n"
+        ) from exc
+
+
 def cmd_fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
+    check_environment()
     outdir.mkdir(parents=True, exist_ok=True)
     print(f"{'dataset':<20}{'rows':>7}{'feat':>6}{'cls':>5}  status")
     print("-" * 60)

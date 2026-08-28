@@ -94,6 +94,12 @@ notebook = ["jupyter>=1.0"]
 # repository root. This becomes a package in a later step.
 package = false
 
+# Use an interpreter uv manages, never one it happens to find on PATH. A
+# pyenv or distribution build compiled without libffi has no _ctypes, which
+# numpy and scipy need, and the failure surfaces far from its cause. A project
+# about reproducibility should not inherit whichever Python the machine had.
+python-preference = "only-managed"
+
 # Only `dev` is installed implicitly. `repro` is an archive of a 2022
 # environment, not something to drag into an everyday `uv run`.
 default-groups = ["dev"]
