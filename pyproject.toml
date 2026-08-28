@@ -62,10 +62,14 @@ Issues = "https://github.com/carlocuccu/pgm-classifier-computational-complexity/
 # CPython 3.10: torch 1.13.1 publishes no wheel beyond it. The three versions
 # pinned here are the ones the runs actually recorded; the remaining runtime
 # dependencies were not captured per-version and keep their floors.
+# The marker is not decoration: torch 1.13.1 has no wheel for CPython 3.11 or
+# later, so without it the lock would be unsatisfiable over the whole
+# requires-python range. Read it as what it says -- this environment exists
+# only on 3.10.
 repro = [
-    "numpy==1.26.4",
-    "scipy==1.14.1",
-    "torch==1.13.1",
+    "numpy==1.26.4 ; python_version < '3.11'",
+    "scipy==1.14.1 ; python_version < '3.11'",
+    "torch==1.13.1 ; python_version < '3.11'",
 ]
 
 dev = [
