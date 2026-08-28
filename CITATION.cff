@@ -11,8 +11,8 @@ type: software
 license: MIT
 version: 1.0.0
 date-released: "2026-08-20"
-repository-code: "<REPOSITORY-URL>"
-url: "<REPOSITORY-URL>"
+repository-code: "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
+url: "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
 keywords:
   - quantum-inspired machine learning
   - pretty good measurement
@@ -67,6 +67,6 @@ preferred-citation:
       given-names: Riccardo
       affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
 # TODO before publication:
-#   * replace <REPOSITORY-URL> with the public URL of the repository
-#   * add `doi:` for the archived release (e.g. Zenodo) and for the article
+#   * update `version` and `date-released` to those of the archived release
+#   * add `doi:` for the archived release (Zenodo) and for the article
 #   * fill in volume / pages / article number once the paper is assigned them

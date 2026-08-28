@@ -23,7 +23,8 @@ downloads and rebuilds the datasets exactly as they were used.
 ## Quickstart
 
 ```bash
-git clone <REPOSITORY-URL> && cd pgm-repo
+git clone https://github.com/carlocuccu/pgm-classifier-computational-complexity
+cd pgm-classifier-computational-complexity
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
