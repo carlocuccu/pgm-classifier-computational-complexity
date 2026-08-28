@@ -128,6 +128,12 @@ exclude = ["qunica/**"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+
+# The project is not installed (see [tool.uv] package), so the repository root
+# has to be on sys.path for `import qunica` to resolve. Without this the
+# estimator tests fail at collection rather than skipping, and only on a
+# machine that has PyTorch -- which is exactly where they are supposed to run.
+pythonpath = ["."]
 markers = [
     "torch: needs PyTorch and the qunica estimators (skipped where absent)",
     "network: downloads from PMLB, OpenML or UCI (skipped by default)",

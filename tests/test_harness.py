@@ -62,6 +62,29 @@ def test_the_split_is_stratified_and_seeded(harness):
     assert list(train) == list(again), "the same seed must give the same split"
 
 
+def test_the_estimator_modules_are_importable_from_the_repository_root():
+    """`import qunica` must resolve, whether or not PyTorch is installed.
+
+    The project is not installed as a package, so the repository root has to be
+    on sys.path. When it is not, the estimator tests do not skip -- they fail at
+    collection, and only on a machine that has PyTorch, which is precisely
+    where they were meant to run. `find_spec` locates the modules without
+    executing them, so this catches the path problem here too.
+    """
+    import importlib.util
+
+    for module in (
+        "qunica",
+        "qunica.classifiers",
+        "qunica.classifiers.KPGMC_Low_Rank",
+        "qunica.classifiers.PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank",
+    ):
+        assert importlib.util.find_spec(module) is not None, (
+            f"{module} is not importable; is the repository root on sys.path? "
+            "See `pythonpath` in [tool.pytest.ini_options]."
+        )
+
+
 def test_a_missing_dataset_points_at_the_fetch_script(harness):
     with pytest.raises(FileNotFoundError, match="fetch_datasets"):
         harness.load_dataset("a-dataset-that-does-not-exist")
