@@ -10,7 +10,7 @@ abstract: >-
 type: software
 license: MIT
 version: 1.0.0
-date-released: "2026-08-20"
+date-released: "2026-08-28"
 repository-code: "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
 url: "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
 keywords:
@@ -67,6 +67,5 @@ preferred-citation:
       given-names: Riccardo
       affiliation: "Università degli Studi di Cagliari, Cagliari, Italy"
 # TODO before publication:
-#   * update `version` and `date-released` to those of the archived release
 #   * add `doi:` for the archived release (Zenodo) and for the article
 #   * fill in volume / pages / article number once the paper is assigned them
