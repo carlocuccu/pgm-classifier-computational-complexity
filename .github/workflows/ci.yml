@@ -32,6 +32,8 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
 
+      # PyTorch is an extra, so this job stays small and fast; the estimators
+      # get their own job below.
       - name: Install dependencies
         run: uv sync --locked --group dev --python ${{ matrix.python }}
 
@@ -41,9 +43,6 @@ jobs:
       - name: Check formatting
         run: uv run ruff format --check .
 
-      # The estimator tests come along for free: the project depends on torch,
-      # so `-m torch` is not skipped here and the equivalence of the k-PGM and
-      # the Rc-PGM is exercised on every push.
       - name: Test
         run: uv run pytest
 
@@ -52,3 +51,27 @@ jobs:
       # spending CI minutes on a real benchmark.
       - name: Harness self-test
         run: uv run python run_benchmarks.py selftest
+
+  estimators:
+    name: estimators (PyTorch)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies, PyTorch included
+        run: uv sync --locked --group dev --extra estimators
+
+      # The equivalence of the k-PGM and the Rc-PGM, the bound on the retained
+      # rank, and the observation that it exceeds d -- which is what settles
+      # r_{G^c} as the rank of G^c rather than of G.
+      - name: Test the published estimators
+        run: uv run --extra estimators pytest -m torch

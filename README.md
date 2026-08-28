@@ -31,10 +31,15 @@ downloads and rebuilds the datasets exactly as they were used.
 git clone https://github.com/carlocuccu/pgm-classifier-computational-complexity
 cd pgm-classifier-computational-complexity
 
-uv sync --locked --group dev   # the environment, from uv.lock
-make data                      # download and rebuild the twelve datasets
-make test                      # the test suite
+make setup      # the environment, from uv.lock
+make data       # download and rebuild the twelve datasets
+make test       # the test suite
+make selftest   # exercise the whole measurement pipeline
 ```
+
+None of that needs PyTorch: the harness imports it lazily, so the datasets, the
+self-test, the figure and most of the tests run without it. `make estimators`
+adds it when you want the classifiers themselves.
 
 `make` on its own lists everything the repository offers. Without `uv`, the
 classic path still works: `python -m venv .venv && pip install -r
@@ -168,19 +173,23 @@ straight from `N`, `l`, `d` and `d_sym`.
 
 | command | what it does |
 |---|---|
-| `make setup` | resolve and install the development environment from `uv.lock` |
+| `make setup` | the development environment from `uv.lock`, without PyTorch |
+| `make estimators` | add PyTorch, for the classifiers and the `-m torch` tests |
 | `make lint` / `make format` | what CI checks / fix it in place |
 | `make test` | the test suite; `-m torch` needs PyTorch, `-m network` is opt-in |
 | `make data` / `make check` | rebuild the datasets / verify them offline |
+| `make selftest` | the measurement pipeline end to end, with numpy stand-ins |
 | `make figure` / `make numbers` | redraw Figure 4 · re-derive the quoted figures |
 | `make repro` | the full reproduction, hours on one core |
 
 Two environments are declared in `pyproject.toml`, on purpose. The `repro`
 group pins what the deposited measurements were taken with — numpy 1.26.4,
-scipy 1.14.1, torch 1.13.1 — and resolves only on CPython 3.10, because torch
-1.13.1 publishes no wheel beyond it. The `dev` group is a current interpreter.
+scipy 1.14.1, torch 1.13.1 — and cannot exist past CPython 3.11, which is as
+far as torch 1.13.1 publishes wheels. The `dev` group is a current interpreter.
 Reproducing a 2022 measurement and developing on a 2026 stack are different
-requirements, and one environment cannot honestly serve both.
+requirements, and one environment cannot honestly serve both; the two are
+declared as conflicting so that one lockfile can hold both and install them one
+at a time.
 
 `qunica/` is exempt from formatting and from style rules: it is the estimator
 code published with the paper, kept verbatim so the measurements can be
