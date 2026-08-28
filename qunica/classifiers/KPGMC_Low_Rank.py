@@ -2,12 +2,9 @@ from __future__ import annotations
 from typing import Literal, Optional
 import numpy as np
 import torch
-from tqdm import trange
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import check_classification_targets
 
-__all__ = ["KPGMClassifier"]
+__all__ = ["KPGM"]
 
 
 class KPGM(BaseEstimator, ClassifierMixin):
@@ -98,7 +95,6 @@ class KPGM(BaseEstimator, ClassifierMixin):
 
         self.X_prime_train = X_prime 
 
-        n = X_prime.shape[0]
 
         # Gram Matrix (Eq. 43)
         G = X_prime @ X_prime.T 

@@ -1,15 +1,12 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import check_classification_targets
 import torch
 from torch.nn.functional import normalize
 from scipy import linalg
-from itertools import product
-from collections import Counter
 
-from itertools import combinations_with_replacement, product
-from math import comb, factorial
+from itertools import combinations_with_replacement
+from math import factorial
 
 class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
     """The Pretty Good Measurement (PGM) - Helstrom Quantum Centroid (HQC) classifier is a 

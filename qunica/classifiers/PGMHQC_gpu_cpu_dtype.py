@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import check_classification_targets
 import torch
 from torch.nn.functional import normalize
 from scipy import linalg
