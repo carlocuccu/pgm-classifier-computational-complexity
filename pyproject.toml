@@ -1,0 +1,120 @@
+[project]
+name = "pgm-complexity"
+version = "1.0.0"
+description = "Complexity analysis and benchmarks of three quantum-inspired PGM classifiers, with byte-exact dataset reconstruction from public sources."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = [
+    "quantum-inspired",
+    "pretty-good-measurement",
+    "computational-complexity",
+    "benchmarking",
+    "reproducible-research",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# The authors of the accompanying paper, in the order of its byline; the same
+# list, with ORCIDs and affiliations, is in CITATION.cff.
+authors = [
+    { name = "Carlo Cuccu" },
+    { name = "Giuseppe Sergioli" },
+    { name = "Roberto Giuntini" },
+    { name = "Andrés Camillo Granda Arango" },
+    { name = "Riccardo Era" },
+]
+maintainers = [{ name = "Carlo Cuccu", email = "carlocuccu@protonmail.com" }]
+
+# Floors, not pins: these are the oldest releases the code was run against.
+# The exact environment of the deposited measurements is the `repro` group.
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "scikit-learn>=1.3",
+    "torch>=1.13",
+    "tqdm>=4.65",
+    "matplotlib>=3.7",
+]
+
+[project.urls]
+Repository = "https://github.com/carlocuccu/pgm-classifier-computational-complexity"
+Issues = "https://github.com/carlocuccu/pgm-classifier-computational-complexity/issues"
+
+# ---------------------------------------------------------------------------
+# Dependency groups
+#
+# Two environments, deliberately: the numbers in results_benchmark/ were
+# measured on a 2022 stack that no longer installs on a current interpreter,
+# and the engineering around them is developed on a current one. Keeping both
+# resolvable from one lockfile is the point of the split.
+# ---------------------------------------------------------------------------
+[dependency-groups]
+
+# The environment of the deposited runs, as recorded in the `env` block of
+# results_benchmark/*_meta.json and in docs/environment.md. Resolvable only on
+# CPython 3.10: torch 1.13.1 publishes no wheel beyond it. The three versions
+# pinned here are the ones the runs actually recorded; the remaining runtime
+# dependencies were not captured per-version and keep their floors.
+repro = [
+    "numpy==1.26.4",
+    "scipy==1.14.1",
+    "torch==1.13.1",
+]
+
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "pre-commit>=3.7",
+]
+
+notebook = ["jupyter>=1.0"]
+
+[tool.uv]
+# Not an installable package yet: the harness and the scripts are run from the
+# repository root. This becomes a package in a later step.
+package = false
+
+# ---------------------------------------------------------------------------
+# Lint and format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+# The harness pins the BLAS thread count into the environment before numpy and
+# torch are imported; the imports are therefore deliberately not at the top.
+"run_benchmarks.py" = ["E402"]
+
+# qunica/ is the estimator implementation published with the paper, kept
+# verbatim so that the measurements can be reproduced against the exact code
+# that produced them. Style rules are switched off there, but pyflakes (F) is
+# left on, so a real defect -- an undefined name, an unused import -- is still
+# reported rather than hidden by the exemption.
+"qunica/**" = ["E4", "E7", "E9", "I", "UP", "B", "C4"]
+
+[tool.ruff.format]
+docstring-code-format = true
+# Same reason: the published estimator code is not reformatted.
+exclude = ["qunica/**"]
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "torch: needs PyTorch and the qunica estimators (skipped where absent)",
+    "network: downloads from PMLB, OpenML or UCI (skipped by default)",
+]
