@@ -188,14 +188,13 @@ straight from `N`, `l`, `d` and `d_sym`.
 | `make figure` / `make numbers` | redraw Figure 4 · re-derive the quoted figures |
 | `make repro` | the full reproduction, hours on one core |
 
-Two environments are declared in `pyproject.toml`, on purpose. The `repro`
-group pins what the deposited measurements were taken with — numpy 1.26.4,
-scipy 1.14.1, torch 1.13.1 — and cannot exist past CPython 3.11, which is as
-far as torch 1.13.1 publishes wheels. The `dev` group is a current interpreter.
-Reproducing a 2022 measurement and developing on a 2026 stack are different
-requirements, and one environment cannot honestly serve both; the two are
-declared as conflicting so that one lockfile can hold both and install them one
-at a time.
+Two environments, kept apart on purpose. `uv.lock` is the working one, on a
+current interpreter. The one the deposited measurements were taken in —
+numpy 1.26.4, scipy 1.14.1, torch 1.13.1 — is `requirements-repro.txt`, outside
+the lock: torch 1.13.1 stops at CPython 3.11, and a pin that old inside the
+resolution propagates everywhere and makes the lockfile uninstallable on
+anything newer. It is a record of a 2022 stack, not something to build against,
+and `docs/environment.md` describes the machine around it.
 
 `qunica/` is exempt from formatting and from style rules: it is the estimator
 code published with the paper, kept verbatim so the measurements can be

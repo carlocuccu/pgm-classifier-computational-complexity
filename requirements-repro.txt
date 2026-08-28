@@ -1,0 +1,31 @@
+# The environment the deposited measurements were taken in.
+#
+# This is a record, not a build target. It is deliberately kept out of
+# pyproject.toml and out of uv.lock: torch 1.13.1 publishes wheels for CPython
+# 3.10 and 3.11 and for nothing later, so a pin this old placed in the
+# resolution propagates to every other environment and makes the lockfile
+# uninstallable on a current interpreter. Reproducing a 2022 measurement and
+# developing on a 2026 stack are different jobs, and only one of them belongs
+# in the lock.
+#
+# The versions below are the ones the runs themselves recorded, in the `env`
+# block of results_benchmark/componentA_meta.json and componentB_meta.json;
+# docs/environment.md describes the machine around them. pandas and
+# scikit-learn are absent because the harness never recorded their versions,
+# and a pin nobody measured is worse than an honest gap.
+#
+# To recreate it, on CPython 3.10:
+#
+#     uv venv --python 3.10 .venv-repro
+#     uv pip install --python .venv-repro -r requirements-repro.txt
+#     uv pip install --python .venv-repro pandas scikit-learn tqdm matplotlib
+#     .venv-repro/bin/python run_benchmarks.py A --reps 5
+#
+# Timings will still differ: they belong to the machine in docs/environment.md.
+# What should reproduce exactly is everything that does not depend on one --
+# the accuracies, the retained ranks, the model sizes and the equivalence of
+# the two classifiers.
+
+numpy==1.26.4
+scipy==1.14.1
+torch==1.13.1

@@ -30,9 +30,9 @@ the harness at start-up.
 | BLAS backend (`numpy.show_config()`) | Intel MKL 2020.0.0 for PyTorch; OpenBLAS 0.3.23 for NumPy and SciPy |
 
 The three versions that the runs did record — Python, NumPy and PyTorch — are
-pinned in the `repro` dependency group of `pyproject.toml`, together with SciPy.
-The two that were not are left at their floors there rather than invented: a pin
-nobody measured is worse than an honest gap.
+pinned in `requirements-repro.txt`, together with SciPy; its header says how to
+recreate the environment. The two that were not recorded are absent rather than
+invented: a pin nobody measured is worse than an honest gap.
 
 ## Run parameters
 

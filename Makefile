@@ -11,6 +11,10 @@
 #   make figure    redraw Figure 4 from the deposited measurements
 #   make numbers   re-derive every figure quoted in the empirical section
 #   make lock      refresh uv.lock after changing the dependencies
+#
+# The environment the reported measurements were taken in is not any of these:
+# it is requirements-repro.txt, on CPython 3.10, and is a record rather than a
+# build target. Its header says how to recreate it.
 
 .DEFAULT_GOAL := help
 .PHONY: help setup estimators lock lint format test data check selftest repro \

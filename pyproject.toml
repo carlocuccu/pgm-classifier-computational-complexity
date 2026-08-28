@@ -32,7 +32,7 @@ authors = [
 maintainers = [{ name = "Carlo Cuccu", email = "carlocuccu@protonmail.com" }]
 
 # Floors, not pins: these are the oldest releases the code was run against.
-# The exact environment of the deposited measurements is the `repro` group.
+# The exact environment of the deposited measurements is requirements-repro.txt.
 #
 # torch is deliberately NOT here. The harness imports it lazily, so preparing
 # the datasets, running the self-test, redrawing the figure and most of the
@@ -59,27 +59,14 @@ Issues = "https://github.com/carlocuccu/pgm-classifier-computational-complexity/
 # ---------------------------------------------------------------------------
 # Dependency groups
 #
-# Two environments, deliberately: the numbers in results_benchmark/ were
-# measured on a 2022 stack that no longer installs on a current interpreter,
-# and the engineering around them is developed on a current one. Keeping both
-# resolvable from one lockfile is the point of the split.
+# The environment the deposited measurements were taken in is NOT here. It is
+# an archive of a 2022 stack -- torch 1.13.1 stops at CPython 3.11 -- and a pin
+# that old, placed in the resolution, propagates to every other environment and
+# makes the lockfile uninstallable on a current interpreter. It lives in
+# requirements-repro.txt, outside the lock, which is the honest place for
+# something that is a record rather than a build target.
 # ---------------------------------------------------------------------------
 [dependency-groups]
-
-# The environment of the deposited runs, as recorded in the `env` block of
-# results_benchmark/*_meta.json and in docs/environment.md. The three versions
-# pinned here are the ones the runs actually recorded; the remaining runtime
-# dependencies were not captured per-version and keep their floors.
-#
-# The marker is not decoration: torch 1.13.1 publishes wheels for CPython 3.10
-# and 3.11 and for nothing later, so without it the lock would be
-# unsatisfiable over the whole requires-python range. Read it as what it says
-# -- this environment cannot exist on a newer interpreter.
-repro = [
-    "numpy==1.26.4 ; python_version < '3.12'",
-    "scipy==1.14.1 ; python_version < '3.12'",
-    "torch==1.13.1 ; python_version < '3.12'",
-]
 
 dev = [
     "pytest>=8.0",
@@ -100,18 +87,7 @@ package = false
 # about reproducibility should not inherit whichever Python the machine had.
 python-preference = "only-managed"
 
-# Only `dev` is installed implicitly. `repro` is an archive of a 2022
-# environment, not something to drag into an everyday `uv run`.
 default-groups = ["dev"]
-
-# `repro` pins torch 1.13.1 while the `estimators` extra tracks a current
-# release. Left undeclared, uv resolves every group into one graph, that pin
-# wins everywhere, and the lock becomes uninstallable on any interpreter newer
-# than 3.11. Declaring the conflict is what lets the two coexist in one
-# lockfile and be installed one at a time.
-conflicts = [
-    [{ group = "repro" }, { extra = "estimators" }],
-]
 
 # ---------------------------------------------------------------------------
 # Lint and format
