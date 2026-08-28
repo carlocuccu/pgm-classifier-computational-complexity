@@ -1,5 +1,10 @@
 # Computational Complexity Analysis of Quantum-Inspired Pretty Good Measurement Classifiers
 
+[![CI](https://github.com/carlocuccu/pgm-classifier-computational-complexity/actions/workflows/ci.yml/badge.svg)](https://github.com/carlocuccu/pgm-classifier-computational-complexity/actions/workflows/ci.yml)
+[![Datasets](https://github.com/carlocuccu/pgm-classifier-computational-complexity/actions/workflows/datasets.yml/badge.svg)](https://github.com/carlocuccu/pgm-classifier-computational-complexity/actions/workflows/datasets.yml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Code, data and notebooks accompanying
 
 > C. Cuccu, G. Sergioli, R. Giuntini, A. C. Granda Arango, R. Era,
@@ -25,12 +30,15 @@ downloads and rebuilds the datasets exactly as they were used.
 ```bash
 git clone https://github.com/carlocuccu/pgm-classifier-computational-complexity
 cd pgm-classifier-computational-complexity
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
 
-python scripts/fetch_datasets.py              # download the datasets
-python run_benchmarks.py selftest             # harness self-test (no torch needed)
+uv sync --locked --group dev   # the environment, from uv.lock
+make data                      # download and rebuild the twelve datasets
+make test                      # the test suite
 ```
+
+`make` on its own lists everything the repository offers. Without `uv`, the
+classic path still works: `python -m venv .venv && pip install -r
+requirements.txt`, then run the scripts directly.
 
 The data is not carried in the repository: `datasets/` is empty until
 `scripts/fetch_datasets.py` fills it. That script is self-contained -- it holds
@@ -65,13 +73,14 @@ pgm-repo/
 ├── scripts/
 │   ├── fetch_datasets.py     downloads and rebuilds every dataset used in the paper
 │   └── paper_numbers.py      derives every figure quoted in the paper from a run
+├── tests/                    what holds on any machine: identities, invariants, digests
 ├── notebooks/table7.ipynb    regenerates Table 7
 ├── datasets/                 empty; filled by scripts/fetch_datasets.py
 ├── results_benchmark/        the measurements reported in the paper, as produced
 ├── figures/                  the three figures of the paper
 └── docs/
     ├── datasets.md           sources, licences and transformations of the data
-    └── environment.md        where to record the machine the results were produced on
+    └── environment.md        the machine the deposited runs were measured on
 ```
 
 ## Using the estimators
@@ -154,6 +163,28 @@ the `c` at which they are evaluated. Each condition compares a quantity growing
 with `d_sym` against one that does not, so each holds for every `c` up to some
 value and fails beyond it; the conditions can be recomputed at any other `c`
 straight from `N`, `l`, `d` and `d_sym`.
+
+## Working on it
+
+| command | what it does |
+|---|---|
+| `make setup` | resolve and install the development environment from `uv.lock` |
+| `make lint` / `make format` | what CI checks / fix it in place |
+| `make test` | the test suite; `-m torch` needs PyTorch, `-m network` is opt-in |
+| `make data` / `make check` | rebuild the datasets / verify them offline |
+| `make figure` / `make numbers` | redraw Figure 4 · re-derive the quoted figures |
+| `make repro` | the full reproduction, hours on one core |
+
+Two environments are declared in `pyproject.toml`, on purpose. The `repro`
+group pins what the deposited measurements were taken with — numpy 1.26.4,
+scipy 1.14.1, torch 1.13.1 — and resolves only on CPython 3.10, because torch
+1.13.1 publishes no wheel beyond it. The `dev` group is a current interpreter.
+Reproducing a 2022 measurement and developing on a 2026 stack are different
+requirements, and one environment cannot honestly serve both.
+
+`qunica/` is exempt from formatting and from style rules: it is the estimator
+code published with the paper, kept verbatim so the measurements can be
+reproduced against what produced them. Pyflakes still runs on it.
 
 ## Measurement protocol
 

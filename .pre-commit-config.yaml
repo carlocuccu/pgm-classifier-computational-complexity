@@ -1,0 +1,25 @@
+# Install once with `pre-commit install`, or run over everything with
+# `make lint`. The hooks are the same checks CI runs, so a push that passes
+# locally passes there.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.11
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        # The deposited measurements are compared against digests; a hook must
+        # not rewrite them, and the figures are binary.
+        exclude: ^(results_benchmark/|figures/|datasets/)
+      - id: trailing-whitespace
+        exclude: ^(results_benchmark/|figures/|datasets/|qunica/)
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
