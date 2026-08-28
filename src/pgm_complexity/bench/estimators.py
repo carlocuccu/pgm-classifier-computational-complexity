@@ -14,19 +14,68 @@ from pgm_complexity.bench.measure import timed
 from pgm_complexity.config import BASE_TOL, HARMONIZE_TOL
 
 
+def ensure_estimators_importable() -> bool:
+    """Make `qunica` importable however this code was invoked.
+
+    `qunica` is not an installed package: it is a plain directory at the
+    repository root, beside `src/`. Whether it can be imported therefore
+    depends on how the process was started, and the difference is easy to
+    miss because the two ways that are exercised during development both
+    work:
+
+    * `python -m pgm_complexity.cli` and `python script.py` put the working
+      directory, or the script's directory, first on `sys.path`;
+    * pytest puts the root there because of `pythonpath = ["."]`.
+
+    The installed `pgm` console script does neither. Python gives it the
+    directory of the script itself -- `.venv/bin` -- and never the working
+    directory, so `import qunica` fails there and only there: in the one
+    command the README tells a reader to run.
+
+    Rather than depend on the caller, put the root on `sys.path` ourselves,
+    once, and only when it is actually needed. Returns whether `qunica` is
+    importable afterwards.
+    """
+    import importlib.util
+
+    def present() -> bool:
+        try:
+            return importlib.util.find_spec("qunica") is not None
+        except (ImportError, ValueError):
+            return False
+
+    if present():
+        return True
+    root = str(ROOT)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+        importlib.invalidate_caches()
+    return present()
+
+
 def get_classifiers(include_cpgm=False):
     import importlib
+    import importlib.util
 
     def load(modname):
         for prefix in ("qunica.classifiers.", "qunica."):
+            name = prefix + modname
             try:
-                return importlib.import_module(prefix + modname)
-            except ModuleNotFoundError:
-                continue
+                found = importlib.util.find_spec(name) is not None
+            except (ImportError, ValueError, ModuleNotFoundError):
+                found = False
+            if found:
+                # Import it for real. Anything that goes wrong from here is a
+                # genuine error inside the estimator or a missing dependency
+                # of its own -- most often PyTorch -- and must surface as
+                # itself rather than be reported as a missing module.
+                return importlib.import_module(name)
         raise ModuleNotFoundError(
             f"cannot import {modname!r}: expected qunica/classifiers/{modname}.py "
             f"(or qunica/{modname}.py) under the project root {ROOT}"
         )
+
+    ensure_estimators_importable()
 
     kmod = load("KPGMC_Low_Rank")
     rmod = load("PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank")

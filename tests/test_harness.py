@@ -129,3 +129,53 @@ def test_the_harmonised_tolerance_rescales_by_the_training_size(harness):
     """
     assert harness.HARMONIZE_TOL is True
     assert harness.BASE_TOL == 1e-6
+
+
+def test_the_estimators_are_importable_from_an_installed_entry_point(
+    repo_root, tmp_path
+):
+    """The `pgm` console script must be able to import `qunica`.
+
+    This is the one path the rest of the suite cannot check on its own.
+    `pythonpath = ["."]` puts the repository root on sys.path for every test,
+    which is exactly the condition that hides the failure: an installed
+    console script gets the directory of the script on sys.path, never the
+    working directory, so `import qunica` fails there and nowhere else --
+    in `pgm bench a`, the command the README documents.
+
+    So this runs in a subprocess whose sys.path[0] is a temporary directory,
+    with the repository root removed from the environment, and asserts that
+    the package makes `qunica` importable by itself.
+    """
+    import os
+    import subprocess
+    import sys
+
+    script = tmp_path / "as_a_console_script.py"
+    script.write_text(
+        "import importlib.util, sys\n"
+        "from pgm_complexity.bench.estimators import ensure_estimators_importable\n"
+        "assert str(sys.path[0]) != ROOT, sys.path[0]\n"
+        "print('before', importlib.util.find_spec('qunica') is not None)\n"
+        "print('after', ensure_estimators_importable())\n".replace(
+            "ROOT", repr(str(repo_root))
+        )
+    )
+
+    env = dict(os.environ)
+    keep = [
+        p
+        for p in env.get("PYTHONPATH", "").split(os.pathsep)
+        if p and os.path.realpath(p) != os.path.realpath(repo_root)
+    ]
+    env["PYTHONPATH"] = os.pathsep.join(keep)
+
+    out = subprocess.run(
+        [sys.executable, str(script)],
+        cwd=repo_root,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert out.returncode == 0, out.stderr
+    assert "after True" in out.stdout, out.stdout + out.stderr
