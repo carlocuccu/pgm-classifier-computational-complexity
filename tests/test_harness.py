@@ -85,8 +85,8 @@ def test_the_estimator_modules_are_importable_from_the_repository_root():
         )
 
 
-def test_a_missing_dataset_points_at_the_fetch_script(harness):
-    with pytest.raises(FileNotFoundError, match="fetch_datasets"):
+def test_a_missing_dataset_points_at_the_fetch_command(harness):
+    with pytest.raises(FileNotFoundError, match="pgm data fetch"):
         harness.load_dataset("a-dataset-that-does-not-exist")
 
 
@@ -106,8 +106,10 @@ def test_model_bytes_counts_what_the_fitted_model_holds(harness):
 
 
 def test_selftest_runs_the_whole_pipeline_without_torch(harness, tmp_path, monkeypatch):
-    """`run_benchmarks.py selftest` is the smoke test the CI can always run."""
-    monkeypatch.setattr(harness, "OUT_DIR", tmp_path)
+    """`pgm bench selftest` is the smoke test the CI can always run."""
+    from pgm_complexity.bench import selftest as selftest_module
+
+    monkeypatch.setattr(selftest_module, "OUT_DIR", tmp_path)
 
     class Args:
         reps = 1

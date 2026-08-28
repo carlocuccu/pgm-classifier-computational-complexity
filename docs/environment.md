@@ -50,7 +50,7 @@ invented: a pin nobody measured is worse than an honest gap.
 
 - The three estimators run in `torch.float64` throughout; single precision
   changes both the timings and the retained rank `r_{G^c}` of `G^c`.
-- `run_benchmarks.py` pins the BLAS/OpenMP thread count *before* importing
+- the harness pins the BLAS/OpenMP thread count *before* importing
   numpy and torch. Running it under an externally set `OMP_NUM_THREADS` leaves
   that value in place, so record the effective one.
 - Table 7 contains no timing, only analytic conditions evaluated on integer

@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "pgm-complexity"
 version = "1.0.0"
@@ -76,11 +80,13 @@ dev = [
 
 notebook = ["jupyter>=1.0"]
 
-[tool.uv]
-# Not an installable package yet: the harness and the scripts are run from the
-# repository root. This becomes a package in a later step.
-package = false
+[project.scripts]
+pgm = "pgm_complexity.cli:main"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/pgm_complexity"]
+
+[tool.uv]
 # Use an interpreter uv manages, never one it happens to find on PATH. A
 # pyenv or distribution build compiled without libffi has no _ctypes, which
 # numpy and scipy need, and the failure surfaces far from its cause. A project
@@ -129,10 +135,9 @@ exclude = ["qunica/**"]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
 
-# The project is not installed (see [tool.uv] package), so the repository root
-# has to be on sys.path for `import qunica` to resolve. Without this the
-# estimator tests fail at collection rather than skipping, and only on a
-# machine that has PyTorch -- which is exactly where they are supposed to run.
+# pgm_complexity is installed, but qunica/ is not part of it: it is the
+# estimator code published with the paper, kept where it was. The repository
+# root therefore still has to be on sys.path for `import qunica` to resolve.
 pythonpath = ["."]
 markers = [
     "torch: needs PyTorch and the qunica estimators (skipped where absent)",

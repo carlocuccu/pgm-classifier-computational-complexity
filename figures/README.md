@@ -72,7 +72,7 @@ benchmark harness writes it, as PNG and as PDF, next to the measurements it
 plots:
 
 ```bash
-python run_benchmarks.py B --reps 3
+pgm bench b --reps 3
 # -> results_benchmark/componentB_crossover.{png,pdf}
 ```
 

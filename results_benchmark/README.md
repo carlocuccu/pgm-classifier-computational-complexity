@@ -19,6 +19,11 @@ deposited with the code, and this is where they are.
 |---|---|---|
 | produced on | 2026-08-24 | 2026-08-25 |
 | command | `python run_benchmarks.py A --reps 5` | `python run_benchmarks.py B --reps 3` |
+
+Those are the commands as they were at tag `v1.0.0-rc1`, which is the version
+the paper cites. The harness has since become a package, and the same two runs
+are now `pgm bench a --reps 5` and `pgm bench b --reps 3`; the measurements
+themselves are untouched.
 | repetitions | 5 after warm-up | 3 after warm-up |
 
 Both runs used `BASE_TOL = 1e-6` with `HARMONIZE_TOL = True`, one BLAS thread,
@@ -29,10 +34,10 @@ with the machine description.
 ## Regenerating them
 
 ```bash
-python scripts/fetch_datasets.py                  # once, if datasets/ is empty
-python run_benchmarks.py A --reps 5
-python run_benchmarks.py B --reps 3
-python scripts/paper_numbers.py                   # every figure quoted in the paper
+pgm data fetch            # once, if datasets/ is empty
+pgm bench a --reps 5
+pgm bench b --reps 3
+pgm paper numbers         # every figure quoted in the paper
 ```
 
 The harness writes into **this** directory, so a re-run overwrites the

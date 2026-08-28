@@ -1,40 +1,21 @@
-#!/usr/bin/env python3
-"""Regenerate every number quoted in the "Runtime and memory benchmarks" subsection.
+"""Every figure the empirical section quotes, derived from a deposited run.
 
-The subsection reports a table of measurements plus a number of derived
-quantities (ratios, fitted scaling exponents, empirical crossovers). Recomputing
-those by hand after every run is where transcription errors come from, so this
-script derives all of them from the files the harness writes:
-
-    results_benchmark/componentA.csv   componentA_meta.json
-    results_benchmark/componentB.csv   componentB_meta.json
-
-Usage:
-
-    python scripts/paper_numbers.py                 # report + LaTeX table body
-    python scripts/paper_numbers.py --results DIR   # read another results folder
-
-Every printed figure is labelled with the sentence of the subsection it belongs
-to, so the prose can be checked line by line against a fresh run.
+Nothing here is typed into the manuscript by hand: the ratios, the fitted
+exponents and the crossovers are all read back out of the CSV files, so a
+re-run cannot leave a stale number in the text.
 """
 
 from __future__ import annotations
 
-import argparse
 import csv
 import json
 from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-
 ORDER = ["balance-scale", "haberman", "iris", "led7", "ecoli", "car"]
 
 
-# --------------------------------------------------------------------------
-# formatting
-# --------------------------------------------------------------------------
 def fmt_time(seconds: float) -> str:
     if seconds < 1e-3:
         return f"{seconds * 1e6:.0f} $\\mu$s"
@@ -59,9 +40,6 @@ def bold(text: str, is_best: bool) -> str:
     return f"\\textbf{{{text}}}" if is_best else text
 
 
-# --------------------------------------------------------------------------
-# loading
-# --------------------------------------------------------------------------
 def load(results: Path):
     a = {
         (r["method"], r["dataset"]): r
@@ -73,9 +51,6 @@ def load(results: Path):
     return a, a_meta, b, b_meta
 
 
-# --------------------------------------------------------------------------
-# Component A
-# --------------------------------------------------------------------------
 def component_a_table(a, a_meta) -> str:
     dsym = {m["dataset"]: m["dsym"] for m in a_meta["meta"]}
     lines = []
@@ -147,9 +122,6 @@ def component_a_report(a, a_meta) -> None:
     print(component_a_table(a, a_meta))
 
 
-# --------------------------------------------------------------------------
-# Component B
-# --------------------------------------------------------------------------
 def log_slope(N, values, first: int = 0) -> float:
     x, y = np.log(np.asarray(N, float)), np.log(np.asarray(values, float))
     return float(np.polyfit(x[first:], y[first:], 1)[0])
@@ -259,25 +231,3 @@ def component_b_report(b, b_meta) -> None:
         f"torch {env.get('torch')}, threads {env['threads']}, "
         f"base_tol={env.get('base_tol')}, harmonize_tol={env.get('harmonize_tol')}"
     )
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--results",
-        default=str(ROOT / "results_benchmark"),
-        help="folder holding the harness output",
-    )
-    args = parser.parse_args()
-
-    results = Path(args.results)
-    a, a_meta, b, b_meta = load(results)
-    component_a_report(a, a_meta)
-    component_b_report(b, b_meta)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

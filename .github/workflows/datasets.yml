@@ -1,7 +1,7 @@
 name: Datasets
 
 # The data is not carried in this repository: it is rebuilt from PMLB, OpenML
-# and UCI, byte for byte, by scripts/fetch_datasets.py. That guarantee depends
+# and UCI, byte for byte, by `pgm data fetch`. That guarantee depends
 # on sources this project does not control, so it is checked on a schedule
 # rather than discovered by a reader months later. A red run here means an
 # upstream release moved, a URL changed, or a mirror went away -- and the
@@ -12,7 +12,7 @@ on:
     - cron: "0 6 * * 1" # Mondays, 06:00 UTC
   pull_request:
     paths:
-      - "scripts/fetch_datasets.py"
+      - "src/pgm_complexity/data/**"
       - "tests/test_dataset_specs.py"
       - ".github/workflows/datasets.yml"
   workflow_dispatch:
@@ -39,10 +39,10 @@ jobs:
         run: uv sync --locked --group dev
 
       - name: Download and rebuild every dataset
-        run: uv run python scripts/fetch_datasets.py
+        run: uv run pgm data fetch
 
       - name: Verify the digests offline
-        run: uv run python scripts/fetch_datasets.py --check
+        run: uv run pgm data check
 
       - name: Check the specifications against the sources
         run: uv run pytest -m network tests/test_dataset_specs.py

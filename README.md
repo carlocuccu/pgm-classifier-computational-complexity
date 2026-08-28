@@ -52,9 +52,9 @@ classic path still works: `python -m venv .venv && pip install -r
 requirements.txt`, then run the scripts directly.
 
 The data is not carried in the repository: `datasets/` is empty until
-`scripts/fetch_datasets.py` fills it. That script is self-contained -- it holds
-the source, the licence, the transformation, the row order, the column
-formatting and the digest of every file -- and the twelve files it writes are
+`pgm data fetch` fills it. Everything it needs is in the repository -- the
+source, the licence, the transformation, the row order, the column formatting
+and the digest of every file -- and the twelve files it writes are
 byte-identical to the ones used in the paper. Files already present and already
 correct are left alone; `--check` re-verifies them without touching the
 network, and `--help` prints the full provenance of every dataset.
@@ -67,10 +67,10 @@ checks and the harness self-test run without it.
 | Artefact in the paper | Command | Output |
 |---|---|---|
 | **Table 7** (accuracy saturation and Rc-PGM advantage conditions) | `jupyter notebook notebooks/table7.ipynb` | `results_table7.csv` and the LaTeX body of the table |
-| **Section "Some empirical evidence"**, per-dataset timings | `python run_benchmarks.py A --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
-| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `python scripts/fetch_datasets.py --only-skin`<br>`python run_benchmarks.py B --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
+| **Section "Some empirical evidence"**, per-dataset timings | `pgm bench a --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
+| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
-| **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `python scripts/paper_numbers.py` re-derives every figure quoted in the text |
+| **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `pgm paper numbers` re-derives every figure quoted in the text |
 
 ## Layout
 
@@ -80,13 +80,18 @@ pgm-repo/
 │   ├── PGMHQC_gpu_cpu_dtype.py                     c-PGM     (qunica.CPGM)
 │   ├── KPGMC_Low_Rank.py                           k-PGM     (qunica.KPGM)
 │   └── PGMHQC_gpu_cpu_dtype_Reduced_Low_Rank.py    Rc-PGM    (qunica.RcPGM)
-├── run_benchmarks.py         benchmark harness (Components A, B, selftest, replot)
-├── scripts/
-│   ├── fetch_datasets.py     downloads and rebuilds every dataset used in the paper
-│   └── paper_numbers.py      derives every figure quoted in the paper from a run
+├── src/pgm_complexity/       the package, installed as the `pgm` command
+│   ├── cli.py                pins the BLAS threads, then dispatches
+│   ├── config.py             the constants of the measurement protocol
+│   ├── thresholds.py         the three advantage conditions
+│   ├── data/                 specifications, rebuild, verification
+│   ├── bench/                splits, measurement, Components A and B, self-test
+│   ├── figures.py            Figure 4 and its redrawing
+│   └── paper.py              every figure the empirical section quotes
+├── qunica/                   the estimators as published with the paper
 ├── tests/                    what holds on any machine: identities, invariants, digests
 ├── notebooks/table7.ipynb    regenerates Table 7
-├── datasets/                 empty; filled by scripts/fetch_datasets.py
+├── datasets/                 empty; filled by `pgm data fetch`
 ├── results_benchmark/        the measurements reported in the paper, as produced
 ├── figures/                  the three figures of the paper
 └── docs/
@@ -123,7 +128,7 @@ different in the two families:
   `c > 1` — available after `fit` as `model.lam_inv_sqrt.shape[0]`. The c-PGM
   and the Rc-PGM apply their own `tol` to the spectrum of `σ = G^c / N`
   instead, so the same numerical truncation corresponds to a threshold `N`
-  times smaller; `run_benchmarks.py` rescales it accordingly (see below).
+  times smaller; the harness rescales it accordingly (see below).
 
 Both estimators are used with their default empirical priors
 (`class_weight=None`, `p_j = #k_j / N`), which is the convention Table 7
@@ -157,7 +162,7 @@ plateau-detection criterion and not a visual reading: where the accuracy is flat
 the smallest `c` of the plateau is the one reported.
 
 The accuracies come from **one** seeded stratified 80/20 split
-(`random_state=42`) — the same split `run_benchmarks.py` uses, which is why
+(`random_state=42`) — the same split the harness uses, which is why
 Component A reproduces them exactly. They are therefore single-split point
 estimates, with no repetitions and no confidence interval; on the smaller
 datasets the test set is small (15 samples for `confidence`, 22 for `cloud`, 30
@@ -241,7 +246,7 @@ only comparable across runs that share it:
 
 ## Datasets
 
-No dataset is carried in this repository. `python scripts/fetch_datasets.py`
+No dataset is carried in this repository. `pgm data fetch`
 downloads each of the twelve from PMLB, OpenML or UCI, re-applies the
 documented transformation, restores the row order and the column formatting of
 the files used in the experiments, verifies the result against the recorded
@@ -257,7 +262,7 @@ recorded in the script.
 
 `docs/datasets.md` documents, for every file, its public source, its licence,
 its citation and the transformation applied to it; `python
-scripts/fetch_datasets.py --help` prints the same from the script itself.
+pgm data fetch --help` prints the same from the script itself.
 
 ## Citing
 

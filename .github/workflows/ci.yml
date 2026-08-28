@@ -54,7 +54,7 @@ jobs:
       # split, the timing, the memory accounting and the thresholds, without
       # spending CI minutes on a real benchmark.
       - name: Harness self-test
-        run: uv run python run_benchmarks.py selftest
+        run: uv run pgm bench selftest
 
   estimators:
     name: estimators (PyTorch)

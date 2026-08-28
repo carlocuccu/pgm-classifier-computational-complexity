@@ -12,6 +12,9 @@
 #   make numbers   re-derive every figure quoted in the empirical section
 #   make lock      refresh uv.lock after changing the dependencies
 #
+# Each of these is `pgm <something>`; `uv run pgm --help` lists the
+# command line in full.
+#
 # The environment the reported measurements were taken in is not any of these:
 # it is requirements-repro.txt, on CPython 3.10, and is a record rather than a
 # build target. Its header says how to recreate it.
@@ -48,27 +51,27 @@ test:
 	$(UV) run pytest
 
 data:
-	$(UV) run python scripts/fetch_datasets.py
+	$(UV) run pgm data fetch
 
 check:
-	$(UV) run python scripts/fetch_datasets.py --check
+	$(UV) run pgm data check
 
 selftest:
-	$(UV) run python run_benchmarks.py selftest
+	$(UV) run pgm bench selftest
 
 figure:
-	$(UV) run python run_benchmarks.py replot
+	$(UV) run pgm bench replot
 
 numbers:
-	$(UV) run python scripts/paper_numbers.py
+	$(UV) run pgm paper numbers
 
 # The full reproduction, in the order the paper needs it. Component B sweeps
 # the Skin Segmentation dataset up to N = 8000 and takes hours on one core:
 # this is the long path, not a smoke test. `make test` is the quick one.
 repro: estimators data
-	$(UV) run --extra estimators python run_benchmarks.py A --reps 5
-	$(UV) run --extra estimators python run_benchmarks.py B --reps 3
-	$(UV) run python scripts/paper_numbers.py
+	$(UV) run --extra estimators pgm bench a --reps 5
+	$(UV) run --extra estimators pgm bench b --reps 3
+	$(UV) run pgm paper numbers
 
 clean:
 	rm -rf .pytest_cache .ruff_cache **/__pycache__ results_table7*.csv

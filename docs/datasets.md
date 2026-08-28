@@ -8,7 +8,7 @@ which is used in Component B.
 filled by
 
 ```bash
-python scripts/fetch_datasets.py
+pgm data fetch
 ```
 
 That script is self-contained: it holds the source, the licence, the
@@ -20,7 +20,7 @@ it writes is **byte-identical** to the data used for Table 7 and for the
 benchmarks, so the reported numbers reproduce exactly. Nothing is written unless
 every file has been rebuilt and verified.
 
-This page is the human-readable summary; `python scripts/fetch_datasets.py
+This page is the human-readable summary; `pgm data fetch
 --help` prints the same information from the script itself, and `--sources`
 prints the source table below.
 
@@ -28,19 +28,19 @@ Useful options:
 
 | command | effect |
 |---|---|
-| `python scripts/fetch_datasets.py` | download everything into `datasets/` |
-| `python scripts/fetch_datasets.py --check` | verify the files on disk, offline |
-| `python scripts/fetch_datasets.py --skip-skin` | leave out the one large file |
-| `python scripts/fetch_datasets.py --only-skin` | fetch Skin Segmentation alone |
-| `python scripts/fetch_datasets.py --force` | re-download files already present |
-| `python scripts/fetch_datasets.py --sources` | print sources and licences |
+| `pgm data fetch` | download everything into `datasets/` |
+| `pgm data check` | verify the files on disk, offline |
+| `pgm data fetch --skip-skin` | leave out the one large file |
+| `pgm data fetch --only-skin` | fetch Skin Segmentation alone |
+| `pgm data fetch --force` | re-download files already present |
+| `pgm data sources` | print sources and licences |
 
 ## File format
 
 The eleven CSV files are **header-less**, comma-separated, CRLF-terminated,
 and the **last column is the integer class label**, taking the consecutive
 values `0 .. l-1`. This is the layout that `notebooks/table7.ipynb` and
-`run_benchmarks.py` read with `pandas.read_csv(path, header=None)`.
+the harness read with `pandas.read_csv(path, header=None)`.
 `Skin_NonSkin.txt` is tab-separated and header-less, with three integer
 features and the class label in `{1,2}`.
 
@@ -125,7 +125,7 @@ mismatch aborts the run before anything is written.
 To re-verify files already on disk, without network access:
 
 ```bash
-python scripts/fetch_datasets.py --check
+pgm data check
 ```
 
 ## Licences and citation
