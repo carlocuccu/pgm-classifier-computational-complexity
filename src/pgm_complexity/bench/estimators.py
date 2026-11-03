@@ -93,6 +93,13 @@ def get_classifiers(include_cpgm=False):
     out = {
         "kpgm": lambda c, n_train=None: KPGM(n_copies=c, encoding="amplit", tol=tol),
         "rcpgm": lambda c, n_train=None: RcPGM(n_copies=c, encoding="amplit", tol=tol),
+        # The same k-PGM, with the spectrum of K = (W^{1/2} Y)(W^{1/2} Y)^T
+        # taken from the thin SVD of W^{1/2} Y, Y the explicit feature matrix
+        # (N x d_sym), instead of the dense N x N matrix: O(N d_sym^2) time
+        # and O(N d_sym) memory.
+        "kpgm_features": lambda c, n_train=None: KPGM(
+            n_copies=c, encoding="amplit", tol=tol, solver="features"
+        ),
     }
     if include_cpgm:
         cmod = load("PGMHQC_gpu_cpu_dtype")

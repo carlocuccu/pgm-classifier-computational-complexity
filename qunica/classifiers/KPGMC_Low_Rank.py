@@ -1,4 +1,6 @@
 from __future__ import annotations
+from itertools import combinations_with_replacement
+from math import comb, factorial
 from typing import Literal, Optional
 import numpy as np
 import torch
@@ -32,6 +34,18 @@ class KPGM(BaseEstimator, ClassifierMixin):
         each class label to a nonnegative weight; the weights are normalized
         to sum to one. Each training sample i of class j enters with weight
         w_i = p_j / #k_j, which reproduces the c-PGM with these priors.
+    solver : {'dense', 'features', 'auto'}, default='dense'
+        How the spectrum of K is obtained in `fit`.
+        'dense': form the N x N matrix K and diagonalize it, O(d N^2 + N^3)
+        time and O(N^2) memory (the k-PGM of Cruzeiro et al.).
+        'features': let Y (N x d_sym) be the feature matrix whose rows are
+        the explicit degree-c features of the homogeneous polynomial kernel
+        (the reduced vectors of the Rc-PGM), so that G^c = Y Y^T and
+        K = (W^{1/2} Y)(W^{1/2} Y)^T. The thin SVD of W^{1/2} Y gives the
+        nonzero spectrum of K and its eigenvectors without forming K,
+        in O(N d d_sym + N d_sym min(N, d_sym)) time and O(N d_sym) memory.
+        'auto': 'features' when d_sym < N, 'dense' otherwise.
+        The two solvers give the same classifier; prediction is unchanged.
     dtype : torch.dtype, default=torch.float64
         Computation precision for the encoding routine.
     device : str or torch.device, default='cpu'
@@ -48,6 +62,7 @@ class KPGM(BaseEstimator, ClassifierMixin):
         rescale: float = 1.0,
         tol: float = 1e-6,
         class_weight=None,
+        solver: Literal["dense", "features", "auto"] = "dense",
         dtype: torch.dtype = torch.float64,
         device: torch.device | str = "cpu",
     ) -> None:
@@ -56,6 +71,7 @@ class KPGM(BaseEstimator, ClassifierMixin):
         self.rescale = rescale
         self.tol = tol
         self.class_weight = class_weight
+        self.solver = solver
         self.dtype = dtype
         self.device = device #torch.device(device)
 
@@ -110,34 +126,49 @@ class KPGM(BaseEstimator, ClassifierMixin):
         self.X_prime_train = X_prime 
 
 
-        # Gram Matrix (Eq. 43)
-        G = X_prime @ X_prime.T 
-
-        # Tensor copies (Eq. 55)
-        if self.n_copies > 1:
-            G = G ** self.n_copies
-
         # Priors: sample i of class j enters sigma with weight
-        # w_i = p_j / #k_j, i.e. sigma = Y^T W Y with Y the feature matrix.
-        # The dual of sigma is then K = W^{1/2} G^c W^{1/2}, with the same
-        # nonzero spectrum; the kernel vector of a test sample is W^{1/2} w.
+        # w_i = p_j / #k_j, i.e. sigma = Y^T W Y with Y the feature matrix
+        # (G^c = Y Y^T). The dual of sigma is K = W^{1/2} G^c W^{1/2}, with the
+        # same nonzero spectrum; the kernel vector of a test sample is W^{1/2} w.
         self.sample_weight_ = self._sample_weights(y_int)
-        sqrt_w = self.sample_weight_.sqrt().to(device=G.device, dtype=G.dtype)
-        G = sqrt_w[:, None] * G * sqrt_w[None, :]
 
-        #print("Making G pseudo-inverse...")
-        #self.G_inv_sqrt = self.pinvSqrt(G)
+        n_train, d_enc = X_prime.shape
+        dsym = comb(d_enc + self.n_copies - 1, self.n_copies)
+        solver = self.solver
+        if solver == "auto":
+            solver = "features" if dsym < n_train else "dense"
+        if solver not in ("dense", "features"):
+            raise ValueError('solver should be "dense", "features" or "auto"')
+        self.solver_ = solver
 
-        if G.shape[0] != G.shape[1]:
-            raise ValueError(f"Square matrix expected! Got {G.shape} instead.")
-                
-        # Eq. 50‑52: Pseudo-inverse square root
-        G = G.cpu()
-        G = G.double()  # float64 (safer with LAPACK)
-        G = (G + G.T) / 2  # need to enforce symmetry
+        if solver == "dense":
+            # Gram Matrix (Eq. 43)
+            G = X_prime @ X_prime.T
 
-        #print("Running eigh...")
-        self.lam, self.E = torch.linalg.eigh(G)
+            # Tensor copies (Eq. 55)
+            if self.n_copies > 1:
+                G = G ** self.n_copies
+
+            sqrt_w = self.sample_weight_.sqrt().to(device=G.device, dtype=G.dtype)
+            G = sqrt_w[:, None] * G * sqrt_w[None, :]
+
+            # Eq. 50-52: Pseudo-inverse square root
+            G = G.cpu()
+            G = G.double()  # float64 (safer with LAPACK)
+            G = (G + G.T) / 2  # need to enforce symmetry
+
+            self.lam, self.E = torch.linalg.eigh(G)
+        else:
+            # K = (W^{1/2} Y)(W^{1/2} Y)^T: the left singular vectors of the
+            # weighted feature matrix Yw = W^{1/2} Y are the eigenvectors of K,
+            # its squared singular values the nonzero eigenvalues. K itself is
+            # never formed.
+            Y = self._symmetric_features(X_prime).cpu().double()
+            Yw = self.sample_weight_.sqrt()[:, None] * Y
+            del Y
+            U, S, _ = torch.linalg.svd(Yw, full_matrices=False)
+            self.lam, self.E = S**2, U
+            del Yw
 
         #print("Regularizing...")
         positive_mask = self.lam > self.tol
@@ -198,6 +229,25 @@ class KPGM(BaseEstimator, ClassifierMixin):
 
 
     # --------------------------- utils ------------------------------- #
+
+    def _symmetric_features(self, X_prime):
+        """The feature matrix Y (N x d_sym): row i holds the explicit degree-c
+        features of the homogeneous polynomial kernel at x_i, coordinate n
+        being sqrt(c! / prod_t n_t!) * prod_t x_t^{n_t}, one per occupation
+        sequence n of c copies over d levels, so that Y Y^T = G^c."""
+        n, d = X_prime.shape
+        c = self.n_copies
+        columns = []
+        for levels in combinations_with_replacement(range(d), c):
+            counts = np.bincount(np.asarray(levels, dtype=np.int64), minlength=d)
+            norm = factorial(c) / np.prod([factorial(int(k)) for k in counts])
+            column = torch.full((n,), float(np.sqrt(norm)), dtype=X_prime.dtype,
+                                device=X_prime.device)
+            for t, k in enumerate(counts):
+                if k > 0:
+                    column = column * X_prime[:, t] ** int(k)
+            columns.append(column)
+        return torch.stack(columns, dim=1)
 
     def _sample_weights(self, y_int):
         """w_i = p_{j(i)} / #k_{j(i)} for the priors selected by class_weight."""
