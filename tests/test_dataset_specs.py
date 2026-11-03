@@ -1,6 +1,6 @@
 """The dataset specifications, and the files they describe.
 
-scripts/fetch_datasets.py carries everything needed to rebuild the twelve
+`pgm data fetch` carries everything needed to rebuild the twelve
 datasets byte for byte: the source, the transformation, the row order, the
 column formatting and the digests. Those declarations have to be internally
 consistent before they can be trusted to reconstruct anything, and the files on
@@ -113,7 +113,7 @@ def _present(datasets_script, repo_root):
 def test_files_on_disk_match_their_digests(datasets_script, repo_root):
     present = _present(datasets_script, repo_root)
     if not present:
-        pytest.skip("datasets/ is empty; run scripts/fetch_datasets.py")
+        pytest.skip("datasets/ is empty; run `pgm data fetch`")
 
     for name, path, spec in present:
         assert datasets_script.matches(path.read_bytes(), spec), name
@@ -122,7 +122,7 @@ def test_files_on_disk_match_their_digests(datasets_script, repo_root):
 def test_files_on_disk_have_the_declared_shape(datasets_script, repo_root):
     present = _present(datasets_script, repo_root)
     if not present:
-        pytest.skip("datasets/ is empty; run scripts/fetch_datasets.py")
+        pytest.skip("datasets/ is empty; run `pgm data fetch`")
 
     for name, path, spec in present:
         with path.open(newline="") as handle:

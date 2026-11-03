@@ -133,7 +133,7 @@ def replot_B():
     if not csv_path.exists() or not meta_path.exists():
         raise SystemExit(
             f"{csv_path.name} and {meta_path.name} are both needed; "
-            f"run `python run_benchmarks.py B` first."
+            f"run `pgm bench b` first."
         )
 
     numeric = {"N", "d", "c", "l", "fit_rss_peak", "pred_rss_peak", "model_bytes"}

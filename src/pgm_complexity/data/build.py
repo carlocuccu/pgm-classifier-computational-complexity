@@ -1,10 +1,10 @@
 """Download and prepare every dataset used in the paper.
 
 This is the only file needed to obtain the data: run it and `datasets/` is
-filled with the twelve files that `notebooks/table7.ipynb` and
-`run_benchmarks.py` read.
+filled with the twelve files that `notebooks/table7.ipynb` and the benchmark
+harness (`pgm bench`) read.
 
-    python scripts/fetch_datasets.py
+    pgm data fetch
 
 Each dataset is downloaded from its public repository, transformed as
 documented below, written with the row order and the column formatting of the
@@ -14,14 +14,14 @@ Table 7 and Table 8, so the reported numbers reproduce exactly. Nothing is
 written unless every requested dataset has been rebuilt and verified, so a
 failed run never leaves `datasets/` half-populated.
 
-    python scripts/fetch_datasets.py --check     # verify what is on disk, offline
+    pgm data check     # verify what is on disk, offline
 
 Options
 -------
 --outdir DIR        write elsewhere than `datasets/`
 --datasets A B ...  restrict to these dataset names
 --skip-skin         leave out Skin Segmentation (245057 rows), which only
-                    `run_benchmarks.py B` needs
+                    `pgm bench b` needs
 --only-skin         fetch Skin Segmentation and nothing else
 --force             re-download the files that are already correct
 --check             verify the files on disk against the digests, without

@@ -35,7 +35,7 @@ def test_the_split_reproduces_the_tabulated_training_sizes(harness, repo_root):
         if (repo_root / "datasets" / f"{name}.csv").exists()
     }
     if not available:
-        pytest.skip("datasets/ is empty; run scripts/fetch_datasets.py")
+        pytest.skip("datasets/ is empty; run `pgm data fetch`")
 
     for name in available:
         _, y = harness.load_dataset(name)

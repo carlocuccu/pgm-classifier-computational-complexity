@@ -83,7 +83,7 @@ def check(outdir: Path, names: list, want_skin: bool) -> int:
     if failures:
         print(
             f"{failures} file(s) missing or altered. Run "
-            f"`python scripts/fetch_datasets.py` to (re)build them."
+            f"`pgm data fetch` to (re)build them."
         )
         return 1
     print("Every file is present and matches the expected digest.")
@@ -163,7 +163,7 @@ def fetch(outdir: Path, names: list, want_skin: bool, force: bool) -> int:
             "Skin Segmentation could not be fetched from UCI nor from its "
             "OpenML mirror.\nThe eleven small datasets are in place: "
             "Table 7 and Component A of the harness\ncan run; only "
-            "`run_benchmarks.py B` needs this file."
+            "`pgm bench b` needs this file."
         )
         return 1
     print("Every dataset is in place and matches its digest byte for byte.")

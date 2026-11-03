@@ -112,10 +112,6 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "C4"]
 ignore = ["E741"]
 
 [tool.ruff.lint.per-file-ignores]
-# The harness pins the BLAS thread count into the environment before numpy and
-# torch are imported; the imports are therefore deliberately not at the top.
-"run_benchmarks.py" = ["E402"]
-
 # qunica/ is the estimator implementation published with the paper, kept
 # verbatim so that the measurements can be reproduced against the exact code
 # that produced them. Style rules are switched off there, but pyflakes (F) is
