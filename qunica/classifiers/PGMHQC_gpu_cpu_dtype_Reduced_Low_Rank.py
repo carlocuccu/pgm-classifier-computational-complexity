@@ -445,6 +445,9 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
                 E_ker = E[:, ~mask]
                 proj_ker_R = E_ker @ E_ker.T
                 self.rank_sigma_ = int(mask.sum().item())
+                # Full spectrum of sigma, kept for the diagnostics of the
+                # truncation (retained rank, eigenvalues near the threshold).
+                self.sigma_eigvals_ = lam.detach().cpu()
 
                 # Filter eigenvectors corresponding to eigenvalues that satisfy the mask condition
                 E = E[:, mask]

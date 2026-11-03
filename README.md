@@ -71,6 +71,7 @@ checks and the harness self-test run without it.
 | **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
 | **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `pgm paper numbers` re-derives every figure quoted in the text |
+| POVM residuals of the truncated measurement (completeness, positivity, retained rank) | `pgm diag povm` | `results_diagnostics/povm.csv`, `povm_meta.json` |
 
 ## Layout
 

@@ -591,6 +591,7 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
         E_kept = E[:, mask]
         E_ker = E[:, ~mask]
         self.rank_sigma_ = int(mask.sum().item())
+        self.sigma_eigvals_ = lam.detach().cpu()
 
         sqrt_pinv = (E_kept * lam[mask].pow(-0.5)) @ E_kept.T
         proj_ker = E_ker @ E_ker.T

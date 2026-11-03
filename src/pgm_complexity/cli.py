@@ -3,6 +3,7 @@
     pgm data fetch | check | sources
     pgm bench a | b | all | selftest | replot
     pgm paper numbers
+    pgm diag povm
 
 Two things about this module are deliberate and easy to undo by accident.
 
@@ -117,6 +118,25 @@ def _paper(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# pgm diag
+# ---------------------------------------------------------------------------
+def _diag_povm(args) -> int:
+    from pathlib import Path
+
+    from pgm_complexity.diagnostics import povm_table
+
+    outdir = Path(args.outdir).resolve() if args.outdir else None
+    povm_table(
+        args.datasets,
+        args.copies,
+        seed=args.seed,
+        mem_limit_gb=args.mem_limit_gb,
+        outdir=outdir,
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pgm",
@@ -187,6 +207,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     numbers.add_argument("--results", default=None, help="default: results_benchmark/")
     numbers.set_defaults(func=_paper)
+
+    # -- diag ---------------------------------------------------------------
+    diag = sub.add_parser("diag", help="numerical diagnostics of the estimators")
+    diag_sub = diag.add_subparsers(dest="action", required=True)
+    povm = diag_sub.add_parser(
+        "povm",
+        help="completeness and positivity of the truncated PGM, per dataset and c",
+    )
+    povm.add_argument(
+        "--datasets", nargs="+", default=sorted(TABLE7_C), choices=sorted(TABLE7_C)
+    )
+    povm.add_argument(
+        "--copies", nargs="+", type=int, default=list(range(1, 10)), metavar="C"
+    )
+    povm.add_argument("--seed", type=int, default=42)
+    povm.add_argument("--mem-limit-gb", type=float, default=8.0)
+    povm.add_argument("--outdir", default=None, help="default: results_diagnostics/")
+    povm.set_defaults(func=_diag_povm)
 
     return parser
 
