@@ -636,28 +636,23 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
                 # Counter for j-th split X'
                 X_prime_split_jth = X_prime_split[j]
                 
-                # Number of rows (samples) in j-th split X'
-                X_prime_split_m = X_prime_split_jth.shape[0]
-                
+                # Operator of class i: the PGM element F_i, or for the Helstrom
+                # measurement the sum of projectors of the class
+                op = self.pgms_[i] if self.measure == 'pgm' else self.proj_sums_[i]
+
                 if X_prime_split_jth.ndimension() == 2:
-                    # Encode vectors into quantum densities
-                    density_chunk = torch.matmul(X_prime_split_jth.view(X_prime_split_m, n_prime, 1),
-                                                X_prime_split_jth.view(X_prime_split_m, 1, n_prime))
-                
+                    # Pure states: Tr(op |x><x|) = x^T op^T x, evaluated as a
+                    # quadratic form, ((X op) * X) summed over the columns,
+                    # without materializing the m densities of size
+                    # dsym x dsym. Same O(dsym^2) operations per sample as the
+                    # trace, through one matrix product.
+                    trace_class_split = (torch.matmul(X_prime_split_jth, op)
+                                         * X_prime_split_jth).sum(dim = 1)
+
                 elif X_prime_split_jth.ndimension() == 3: # This is for already quantum datasets
-                    density_chunk = X_prime_split_jth
-                
-                        
-                # When Pretty Good Measurement is specified
-                if self.measure == 'pgm':
-                    # Calculate trace of the dot product of density of each row and Pretty Good
-                    # Measurement
-                    trace_class_split = torch.einsum(einsum_nest, density_chunk, self.pgms_[i])
-                # When Helstrom measurement is specified
-                else:
-                    # Calculate trace of the dot product of density of each row and sum of 
-                    # projectors with corresponding positive and negative eigenvalues respectively
-                    trace_class_split = torch.einsum(einsum_nest, density_chunk, self.proj_sums_[i])
+                    # Calculate trace of the dot product of density of each row and the
+                    # operator of the class
+                    trace_class_split = torch.einsum(einsum_nest, X_prime_split_jth, op)
                 return trace_class_split
             
             # Determine length of X_prime_split_arr
