@@ -3,7 +3,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 import torch
 from torch.nn.functional import normalize
-from scipy import linalg
 
 from itertools import combinations_with_replacement
 from math import factorial
@@ -435,6 +434,18 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
                 # This is to avoid division by zero or very small values
                 mask = lam > self.tol
 
+                # Projector onto the discarded eigenspace, taken from the same
+                # spectral mask as the pseudo-inverse. The truncated operator
+                # sigma_eps keeps exactly the eigendirections with lam > tol, so
+                # its kernel is spanned by all the others: completing the POVM
+                # with this projector makes sum_i F_i = I hold to machine
+                # precision. A separately computed null space (with its own
+                # rank threshold) would leave out the directions with
+                # 0 < lam <= tol, and the operators would not sum to I.
+                E_ker = E[:, ~mask]
+                proj_ker_R = E_ker @ E_ker.T
+                self.rank_sigma_ = int(mask.sum().item())
+
                 # Filter eigenvectors corresponding to eigenvalues that satisfy the mask condition
                 E = E[:, mask]
 
@@ -443,19 +454,6 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
                 lam_inv_sqrt = lam[mask].pow(-0.5)
 
                 ########################################################################################################
-                    
-                # Calculate kernel of R
-                # Change datatype of R to float64 as the kernel of a matrix calculation is highly
-                # senstive to numerical precision/rounding
-                # Send tensor from GPU to CPU and cast into an array, use scipy.linalg.null_space()
-                # to calculate kernel because there is no equivalent function in PyTorch which
-                # behaves numerically similarly
-                # Cast array back into a tensor and send back from CPU to GPU
-                ker_R = torch.tensor(linalg.null_space(torch.as_tensor(R, dtype = self.dtype) \
-                                    .cpu().numpy()), dtype = self.dtype).to(self.device) 
-                    
-                # Calculate projector of kernel of R
-                proj_ker_R = torch.matmul(ker_R, ker_R.T)
                 
                 # Function to calculate Pretty Good Measurement
                 # NOTE  has been adapted to support the PGM computation through Low-Rank Pseudoinverse

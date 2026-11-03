@@ -3,7 +3,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 import torch
 from torch.nn.functional import normalize
-from scipy import linalg
 
 class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
     """The Pretty Good Measurement (PGM) - Helstrom Quantum Centroid (HQC) classifier is a 
@@ -305,26 +304,17 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
                 # in machine language
                 # Cast array back into a tensor and send back from CPU to GPU
                 
-                sqrt_pinv_R = self.pinvSqrt(R)
-                
+                # Square root of the pseudo-inverse and projector onto the
+                # kernel, both from ONE spectral decomposition and ONE mask, so
+                # that the completed operators sum to the identity (see
+                # `_pinv_sqrt_and_kernel`).
+                sqrt_pinv_R, proj_ker_R = self._pinv_sqrt_and_kernel(R)
+
                 """sqrt_pinv_R = torch.tensor(np.real(linalg.sqrtm(torch.pinverse(torch.as_tensor(R, dtype = \
                                            self.dtype)).cpu().numpy())), dtype = self.dtype).to(self.device)"""
                 
                 """sqrt_pinv_R = torch.tensor(linalg.sqrtm( torch.pinverse(R).cpu().numpy()
                                                         ).astype(np.complex64), dtype = self.dtype).to(self.device)"""
-                    
-                # Calculate kernel of R
-                # Change datatype of R to float64 as the kernel of a matrix calculation is highly
-                # senstive to numerical precision/rounding
-                # Send tensor from GPU to CPU and cast into an array, use scipy.linalg.null_space()
-                # to calculate kernel because there is no equivalent function in PyTorch which
-                # behaves numerically similarly
-                # Cast array back into a tensor and send back from CPU to GPU
-                ker_R = torch.tensor(linalg.null_space(torch.as_tensor(R, dtype = self.dtype).to(self.device)  \
-                                     .numpy()), dtype = self.dtype).to(self.device) 
-                    
-                # Calculate projector of kernel of R
-                proj_ker_R = torch.matmul(ker_R, ker_R.T)
                     
                 # Function to calculate Pretty Good Measurement
                 def pgm_func(b):
@@ -583,6 +573,28 @@ class PGMHQC_gpu_cpu_dtype(BaseEstimator, ClassifierMixin):
         #np.where(lam > self.tol, lam ** -0.5, 0.0)
     
         return (E * lam_inv_sqrt) @ E.T                  # Formula between eq. 17 and eq. 18
+
+    def _pinv_sqrt_and_kernel(self, M):
+        """Truncated sigma^{-1/2} and the projector onto the kernel of sigma_eps.
+
+        Both come from the same eigendecomposition and the same mask
+        ``lam > tol``: the inverse square root acts on the retained
+        eigendirections, the projector on all the others. Hence
+        sqrt_pinv @ M @ sqrt_pinv + proj_ker = I on the whole space, and the
+        completed operators F_i sum to the identity to machine precision.
+        """
+        if M.shape[0] != M.shape[1]:
+            raise ValueError(f"Square matrix expected! Got {M.shape} instead.")
+
+        lam, E = torch.linalg.eigh(M)
+        mask = lam > self.tol
+        E_kept = E[:, mask]
+        E_ker = E[:, ~mask]
+        self.rank_sigma_ = int(mask.sum().item())
+
+        sqrt_pinv = (E_kept * lam[mask].pow(-0.5)) @ E_kept.T
+        proj_ker = E_ker @ E_ker.T
+        return sqrt_pinv, proj_ker
     
     
     
