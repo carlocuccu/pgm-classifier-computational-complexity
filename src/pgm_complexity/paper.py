@@ -16,6 +16,14 @@ import numpy as np
 ORDER = ["balance-scale", "haberman", "iris", "led7", "ecoli", "car"]
 
 
+def _threshold(env):
+    """The pseudo-inverse threshold a run declares. Runs made up to v1.0.1
+    record `harmonize_tol = True`: 1e-6 on the spectrum of G^c."""
+    if env.get("harmonize_tol"):
+        return f"{env.get('base_tol')} on the spectrum of G^c (v1.0.x convention)"
+    return f"{env.get('base_tol')} on the spectrum of sigma"
+
+
 def fmt_time(seconds: float) -> str:
     if seconds < 1e-3:
         return f"{seconds * 1e6:.0f} $\\mu$s"
@@ -113,10 +121,7 @@ def component_a_report(a, a_meta) -> None:
         f"\nEnvironment: python {env['python']}, numpy {env['numpy']}, "
         f"torch {env.get('torch')}, threads {env['threads']}"
     )
-    print(
-        f"Threshold convention: base_tol={env.get('base_tol')}, "
-        f"harmonize_tol={env.get('harmonize_tol')}"
-    )
+    print(f"Threshold: {_threshold(env)}")
 
     print("\nLaTeX body of the measurement table:\n")
     print(component_a_table(a, a_meta))
@@ -229,5 +234,5 @@ def component_b_report(b, b_meta) -> None:
     print(
         f"\nEnvironment: python {env['python']}, numpy {env['numpy']}, "
         f"torch {env.get('torch')}, threads {env['threads']}, "
-        f"base_tol={env.get('base_tol')}, harmonize_tol={env.get('harmonize_tol')}"
+        f"threshold {_threshold(env)}"
     )

@@ -85,9 +85,9 @@ def component_A(args):
                 status = "OK (identical)"
             elif agree > 0.99:
                 status = (
-                    "near-identical; the residual mismatches come from the "
-                    "pseudo-inverse truncation at near-threshold eigenvalues "
-                    "-- set HARMONIZE_TOL=True for exact agreement"
+                    "near-identical; with a shared threshold the residual "
+                    "mismatches can only come from rounding at eigenvalues "
+                    "within machine precision of the threshold, or from ties"
                 )
             else:
                 status = "CHECK: large disagreement, the timings are not comparable"

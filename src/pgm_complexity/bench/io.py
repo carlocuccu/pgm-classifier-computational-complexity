@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 from pgm_complexity import DATA_DIR
-from pgm_complexity.config import BASE_TOL, HARMONIZE_TOL, SKIN_FILE
+from pgm_complexity.config import BASE_TOL, SKIN_FILE
 from pgm_complexity.threads import THREAD_VARS
 
 
@@ -118,7 +118,6 @@ def env_info():
         "numpy": np.__version__,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "base_tol": BASE_TOL,
-        "harmonize_tol": HARMONIZE_TOL,
     }
     try:
         import torch

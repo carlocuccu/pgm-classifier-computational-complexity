@@ -11,7 +11,7 @@ import sys
 
 from pgm_complexity import ROOT
 from pgm_complexity.bench.measure import timed
-from pgm_complexity.config import BASE_TOL, HARMONIZE_TOL
+from pgm_complexity.config import BASE_TOL
 
 
 def ensure_estimators_importable() -> bool:
@@ -82,34 +82,23 @@ def get_classifiers(include_cpgm=False):
     KPGM = kmod.KPGM
     RcPGM = rmod.PGMHQC_gpu_cpu_dtype
 
-    def rc_tol(n_train):
-        # Scale-consistent pseudo-inverse threshold. The k-PGM truncates the
-        # spectrum of G^c = Phi Phi^T at BASE_TOL, whereas the reduced and
-        # copy-dependent estimators truncate the spectrum of sigma = G^c / N,
-        # which is the same nonzero spectrum divided by N. Dividing the
-        # threshold by N makes the two truncations coincide, so the estimators
-        # agree exactly rather than up to near-threshold eigenvalues.
-        #
-        # sigma = G^c / N holds because the estimators are used with their
-        # default empirical priors (class_weight=None, i.e. p_j = #k_j / N),
-        # under which sigma is the plain average of the N pure states. With
-        # class_weight='balanced' the relation would pick up class-imbalance
-        # factors and this rescaling would no longer be exact.
-        return (BASE_TOL / n_train) if (HARMONIZE_TOL and n_train) else BASE_TOL
+    # One pseudo-inverse threshold for the three estimators. All of them
+    # truncate the spectrum of sigma = sum_j p_j rho_j: the primal ones
+    # directly, the k-PGM through its weighted Gram matrix
+    # K = W^{1/2} G^c W^{1/2}, which has the same nonzero spectrum. With the
+    # same `tol` they discard the same eigendirections, for any priors and any
+    # N. `n_train` is accepted for compatibility and no longer used.
+    tol = BASE_TOL
 
     out = {
-        "kpgm": lambda c, n_train=None: KPGM(
-            n_copies=c, encoding="amplit", tol=BASE_TOL
-        ),
-        "rcpgm": lambda c, n_train=None: RcPGM(
-            n_copies=c, encoding="amplit", tol=rc_tol(n_train)
-        ),
+        "kpgm": lambda c, n_train=None: KPGM(n_copies=c, encoding="amplit", tol=tol),
+        "rcpgm": lambda c, n_train=None: RcPGM(n_copies=c, encoding="amplit", tol=tol),
     }
     if include_cpgm:
         cmod = load("PGMHQC_gpu_cpu_dtype")
         CPGM = cmod.PGMHQC_gpu_cpu_dtype
         out["cpgm"] = lambda c, n_train=None: CPGM(
-            n_copies=c, encoding="amplit", tol=rc_tol(n_train)
+            n_copies=c, encoding="amplit", tol=tol
         )
     return out
 

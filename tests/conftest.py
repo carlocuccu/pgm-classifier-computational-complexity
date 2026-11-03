@@ -34,7 +34,6 @@ def harness():
 
     return SimpleNamespace(
         BASE_TOL=config.BASE_TOL,
-        HARMONIZE_TOL=config.HARMONIZE_TOL,
         dsym_of=dsym_of,
         thresholds=thresholds,
         load_dataset=io.load_dataset,

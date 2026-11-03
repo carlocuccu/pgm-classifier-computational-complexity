@@ -19,7 +19,19 @@ class KPGM(BaseEstimator, ClassifierMixin):
     rescale : float, default=1.0
         Global scale factor applied prior to encoding (cf. Sec. 6).
     tol : float, default=1e-6
-        Eigenvalue threshold for pseudo‑inverse square‑root of *G*.
+        Eigenvalue threshold of the pseudo-inverse square root, applied to the
+        spectrum of the weighted Gram matrix K = W^{1/2} G^c W^{1/2}. The
+        nonzero spectrum of K is that of sigma = sum_j p_j rho_j, so the
+        threshold has the same meaning as the `tol` of the primal estimators
+        (c-PGM, Rc-PGM): with equal `tol` the three truncate the same
+        eigendirections. With empirical priors K = G^c / N; the threshold
+        1e-6 on G^c used up to v1.0.1 corresponds to tol = 1e-6 / N here.
+    class_weight : None, 'balanced' or dict, default=None
+        Prior probabilities p_j of the classes. None: empirical priors
+        p_j = #k_j / N. 'balanced': uniform priors p_j = 1 / l. A dict maps
+        each class label to a nonnegative weight; the weights are normalized
+        to sum to one. Each training sample i of class j enters with weight
+        w_i = p_j / #k_j, which reproduces the c-PGM with these priors.
     dtype : torch.dtype, default=torch.float64
         Computation precision for the encoding routine.
     device : str or torch.device, default='cpu'
@@ -35,6 +47,7 @@ class KPGM(BaseEstimator, ClassifierMixin):
         encoding: Literal[None, "amplit", "stereo"] = "amplit",
         rescale: float = 1.0,
         tol: float = 1e-6,
+        class_weight=None,
         dtype: torch.dtype = torch.float64,
         device: torch.device | str = "cpu",
     ) -> None:
@@ -42,6 +55,7 @@ class KPGM(BaseEstimator, ClassifierMixin):
         self.encoding = encoding
         self.rescale = rescale
         self.tol = tol
+        self.class_weight = class_weight
         self.dtype = dtype
         self.device = device #torch.device(device)
 
@@ -103,6 +117,14 @@ class KPGM(BaseEstimator, ClassifierMixin):
         if self.n_copies > 1:
             G = G ** self.n_copies
 
+        # Priors: sample i of class j enters sigma with weight
+        # w_i = p_j / #k_j, i.e. sigma = Y^T W Y with Y the feature matrix.
+        # The dual of sigma is then K = W^{1/2} G^c W^{1/2}, with the same
+        # nonzero spectrum; the kernel vector of a test sample is W^{1/2} w.
+        self.sample_weight_ = self._sample_weights(y_int)
+        sqrt_w = self.sample_weight_.sqrt().to(device=G.device, dtype=G.dtype)
+        G = sqrt_w[:, None] * G * sqrt_w[None, :]
+
         #print("Making G pseudo-inverse...")
         #self.G_inv_sqrt = self.pinvSqrt(G)
 
@@ -140,6 +162,9 @@ class KPGM(BaseEstimator, ClassifierMixin):
         if self.n_copies > 1:
             w_vec = w_vec ** self.n_copies
         
+        sqrt_w = self.sample_weight_.sqrt().to(device=w_vec.device, dtype=w_vec.dtype)
+        w_vec = sqrt_w[:, None] * w_vec
+
         self.w_vec = w_vec
         ###################################################
         v = self.apply_pinvSqrt_lowrank()
@@ -173,6 +198,26 @@ class KPGM(BaseEstimator, ClassifierMixin):
 
 
     # --------------------------- utils ------------------------------- #
+
+    def _sample_weights(self, y_int):
+        """w_i = p_{j(i)} / #k_{j(i)} for the priors selected by class_weight."""
+        counts = np.bincount(y_int, minlength=len(self.classes_)).astype(np.float64)
+        if self.class_weight is None:
+            priors = counts / counts.sum()
+        elif isinstance(self.class_weight, str) and self.class_weight == "balanced":
+            priors = np.full(len(self.classes_), 1.0 / len(self.classes_))
+        elif isinstance(self.class_weight, dict):
+            missing = [c for c in self.classes_ if c not in self.class_weight]
+            if missing:
+                raise ValueError(f"class_weight has no prior for classes {missing}")
+            priors = np.array([float(self.class_weight[c]) for c in self.classes_])
+            if np.any(priors < 0) or priors.sum() <= 0:
+                raise ValueError("class_weight priors must be nonnegative, not all 0")
+            priors = priors / priors.sum()
+        else:
+            raise ValueError('class_weight should be None, "balanced" or a dict')
+        self.priors_ = priors
+        return torch.tensor(priors[y_int] / counts[y_int], dtype=torch.float64)
 
     def apply_pinvSqrt_lowrank(self):
         """

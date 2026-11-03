@@ -123,17 +123,17 @@ different in the two families:
   symmetric basis of the Rc-PGM and every occurrence of `d_sym` are built on
   that `d`; with this convention `r_{G^c} ≤ min(N, d_sym)` holds in every row of
   Table 7.
-- **Retained rank.** The k-PGM keeps the eigenvectors of `G^c` whose eigenvalue
-  exceeds `tol = 1e-6`; their number is `r_{G^c}`, the numerical rank of the
-  `c`-th power Gram matrix `G^c` — not of `G`, from which it differs as soon as
-  `c > 1` — available after `fit` as `model.lam_inv_sqrt.shape[0]`. The c-PGM
-  and the Rc-PGM apply their own `tol` to the spectrum of `σ = G^c / N`
-  instead, so the same numerical truncation corresponds to a threshold `N`
-  times smaller; the harness rescales it accordingly (see below).
+- **Retained rank.** The three estimators truncate the spectrum of
+  `σ = Σ_j p_j ρ_j`, a density operator of trace one: the c-PGM and the Rc-PGM
+  directly, the k-PGM through the weighted Gram matrix `K = W^{1/2} G^c W^{1/2}`
+  (`w_i = p_j / #k_j`), which has the same nonzero spectrum. With the same
+  `tol` they keep the same eigendirections; the number kept by the k-PGM is
+  `r_{G^c}`, the numerical rank of the `c`-th power Gram matrix (not of `G`),
+  available after `fit` as `model.lam_inv_sqrt.shape[0]`.
 
-Both estimators are used with their default empirical priors
-(`class_weight=None`, `p_j = #k_j / N`), which is the convention Table 7
-reports and the one under which `σ = G^c / N`.
+The estimators are used with their default empirical priors
+(`class_weight=None`, `p_j = #k_j / N`), under which `K = G^c / N`; the k-PGM
+also accepts `'balanced'` and a dict of priors.
 
 ## The advantage conditions
 
@@ -229,11 +229,11 @@ only comparable across runs that share it:
   size of the arrays and tensors the fitted estimator actually holds. The
   second is the quantity the theoretical memory bounds describe; the first
   includes the allocator's behaviour.
-- **Harmonised truncation threshold**: `BASE_TOL = 1e-6` is applied to the
-  spectrum of `G^c` for the k-PGM, and `BASE_TOL / N` to the spectrum of
-  `σ = G^c / N` for the c-PGM and the Rc-PGM, so that the two pseudo-inverses
-  discard the same eigendirections. Set `HARMONIZE_TOL = False` to disable the
-  rescaling; both constants are written to `*_meta.json`.
+- **Truncation threshold**: one threshold, `BASE_TOL = 1e-10`, on the spectrum
+  of `σ` for all three estimators, independent of `N` — a margin above the
+  rounding noise of the eigensolver; it is written to `*_meta.json`. Up to
+  v1.0.1 the threshold was `1e-6` on the spectrum of `G^c` (`1e-6 / N` on
+  `σ`); the runs of that version are reproducible from its tag.
 - **Equivalence check**: every run ends by verifying that the k-PGM and the
   Rc-PGM produce the same argmax on the test set. The message distinguishes
   three outcomes: exact agreement; near-agreement, whose residual mismatches

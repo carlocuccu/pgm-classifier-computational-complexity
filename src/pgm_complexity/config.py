@@ -6,12 +6,18 @@ one place so that a run and its metadata cannot disagree about them.
 
 from __future__ import annotations
 
-# Eigenvalue threshold of the pseudo-inverse square root. BASE_TOL is the
-# threshold of the k-PGM, applied to the spectrum of G^c; HARMONIZE_TOL rescales
-# it for the estimators that truncate the spectrum of sigma = G^c / N instead
-# (see rc_tol). Both values are recorded in the *_meta.json of every run.
-BASE_TOL = 1e-6
-HARMONIZE_TOL = True
+# Eigenvalue threshold of the pseudo-inverse square root. All three estimators
+# truncate the spectrum of sigma = sum_j p_j rho_j, a density operator of trace
+# one (the k-PGM through K = W^{1/2} G^c W^{1/2}, which has the same nonzero
+# spectrum), and all three use the same threshold, independent of N. Its value
+# is a margin above the rounding noise of a double-precision eigensolver,
+# about d_sym * eps * lambda_max <~ 1e-12 for d_sym up to a few thousand.
+# It is recorded in every *_meta.json.
+#
+# Up to v1.0.1 the threshold was 1e-6 on the spectrum of the unweighted G^c,
+# i.e. 1e-6 / N on sigma; the runs of that version are reproducible from its
+# tag.
+BASE_TOL = 1e-10
 
 # Copy numbers of Table 7 of the manuscript (accuracy saturation point).
 TABLE7_C = {

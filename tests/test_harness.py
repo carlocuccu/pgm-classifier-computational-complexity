@@ -120,15 +120,15 @@ def test_selftest_runs_the_whole_pipeline_without_torch(harness, tmp_path, monke
     assert (tmp_path / "selftest.csv").exists()
 
 
-def test_the_harmonised_tolerance_rescales_by_the_training_size(harness):
-    """k-PGM truncates the spectrum of G^c, the Rc-PGM that of sigma = G^c / N.
-
-    The two spectra differ by the factor N, so a single numerical threshold
-    would discard different eigendirections in the two estimators. This is the
-    rescaling that keeps them comparable.
-    """
-    assert harness.HARMONIZE_TOL is True
-    assert harness.BASE_TOL == 1e-6
+def test_one_fixed_threshold_on_sigma_for_every_estimator(harness):
+    """All three estimators truncate the spectrum of sigma, the k-PGM through
+    K = W^{1/2} G^c W^{1/2}: one threshold, the same for every estimator and
+    independent of the training-set size."""
+    assert harness.BASE_TOL == 1e-10
+    pytest.importorskip("torch")
+    f = harness.get_classifiers(include_cpgm=True)
+    for n_train in (50, 5000):
+        assert {f[m](2, n_train=n_train).tol for m in f} == {harness.BASE_TOL}
 
 
 def test_the_estimators_are_importable_from_an_installed_entry_point(

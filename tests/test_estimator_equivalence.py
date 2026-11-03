@@ -38,10 +38,9 @@ def data():
 def test_kpgm_and_rcpgm_predict_the_same_labels(harness, factories, data, c):
     """The equivalence of Theorem 1, on every test sample.
 
-    The two estimators truncate different matrices -- G^c and sigma = G^c / N --
-    whose spectra differ by the factor N, so the Rc-PGM is given the rescaled
-    threshold the harness uses. Without that rescaling the two would discard
-    different eigendirections and could disagree near the truncation.
+    The k-PGM truncates K = G^c / N and the Rc-PGM sigma, which have the same
+    nonzero spectrum: with the shared threshold of the harness the two discard
+    the same eigendirections.
     """
     X_train, y_train, X_test, _ = data
 
