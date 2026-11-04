@@ -132,103 +132,81 @@ def log_slope(N, values, first: int = 0) -> float:
     return float(np.polyfit(x[first:], y[first:], 1)[0])
 
 
-def crossover(N, series_k, series_r) -> float | None:
-    """First N at which the k-PGM curve rises above the Rc-PGM one (log-log)."""
-    N = np.asarray(N, float)
-    diff = np.log(np.asarray(series_k, float)) - np.log(np.asarray(series_r, float))
-    for i in range(len(N) - 1):
-        if diff[i] < 0 <= diff[i + 1]:
-            t = -diff[i] / (diff[i + 1] - diff[i])
-            return float(np.exp(np.log(N[i]) + t * (np.log(N[i + 1]) - np.log(N[i]))))
-    return None
+def _thresholds_by_c(b, b_meta):
+    """Thresholds keyed by copy number, for single-c runs (up to v1.0.x)
+    and for sweeps over several copy numbers."""
+    thr = b_meta["thresholds"]
+    if "dsym" in thr:
+        return {int(float(b[0]["c"])): thr}
+    return {int(key): value for key, value in thr.items()}
+
+
+def _cells(b, c, method=None):
+    rows = [r for r in b if int(float(r["c"])) == c]
+    if method is not None:
+        rows = [r for r in rows if r["method"] == method]
+    return sorted(rows, key=lambda r: float(r["N"]))
 
 
 def component_b_report(b, b_meta) -> None:
+    from pgm_complexity.crossovers import crossover_table, format_table
+
     print()
     print("=" * 78)
     print("COMPONENT B")
     print("=" * 78)
 
-    k = [r for r in b if r["method"] == "kpgm"]
-    r = [r for r in b if r["method"] == "rcpgm"]
-    N = [float(x["N"]) for x in k]
-    half = len(N) // 2
+    infos = _thresholds_by_c(b, b_meta)
+    methods = [
+        m
+        for m in ("kpgm", "kpgm_features", "rcpgm")
+        if any(r["method"] == m for r in b)
+    ]
 
-    series = {
-        "training time": ("fit_mean", None),
-        "prediction time": ("pred_mean", None),
-        "model memory": ("model_bytes", None),
-    }
-
-    print("\nFitted log-log slopes (exponent of N):")
-    print(
-        f"  {'quantity':<18}{'k-PGM full':>12}{'k-PGM upper':>13}"
-        f"{'Rc-PGM full':>13}{'Rc-PGM upper':>14}"
-    )
-    for label, (field, _) in series.items():
-        kv = [float(x[field]) for x in k]
-        rv = [float(x[field]) for x in r]
-        print(
-            f"  {label:<18}{log_slope(N, kv):>12.2f}{log_slope(N, kv, half):>13.2f}"
-            f"{log_slope(N, rv):>13.2f}{log_slope(N, rv, half):>14.2f}"
-        )
+    print("\nFitted log-log slopes (exponent of N), full sweep / upper half:")
+    print(f"  {'c':>2} {'quantity':<18}" + "".join(f"{m:>18}" for m in methods))
+    for c in sorted(infos):
+        for label, field in (
+            ("training time", "fit_mean"),
+            ("prediction time", "pred_mean"),
+            ("model memory", "model_bytes"),
+        ):
+            parts = []
+            for m in methods:
+                rows = _cells(b, c, m)
+                N = [float(x["N"]) for x in rows]
+                v = [float(x[field]) for x in rows]
+                half = len(N) // 2
+                parts.append(
+                    f"{log_slope(N, v):>11.2f} / {log_slope(N, v, half):<4.2f}"
+                )
+            print(f"  {c:>2} {label:<18}" + "".join(parts))
     print(
         "  ('upper' = fitted over the upper half of the sweep; quote the range you use)"
     )
 
-    thr = b_meta["thresholds"]
-    print("\nCrossovers (N at which the k-PGM becomes the more expensive):")
-    print(f"  {'quantity':<18}{'empirical':>12}{'theoretical':>14}  condition")
-    pairs = [
-        ("training time", "fit_mean", thr["tr_time_thr"], "N > l^(1/3) dsym"),
-        (
-            "model memory",
-            "model_bytes",
-            thr["pred_thr"],
-            "N > l dsym^2 / (d + r_{G^c})   [prediction condition]",
-        ),
-        (
-            "prediction time",
-            "pred_mean",
-            thr["pred_thr"],
-            "N > l dsym^2 / (d + r_{G^c})",
-        ),
-    ]
-    for label, field, threshold, condition in pairs:
-        kv = [float(x[field]) for x in k]
-        rv = [float(x[field]) for x in r]
-        emp = crossover(N, kv, rv)
-        emp_text = f"{emp:.0f}" if emp else "not in range"
-        print(f"  {label:<18}{emp_text:>12}{threshold:>14.0f}  {condition}")
-    print(
-        f"\n  Training-memory condition N > dsym^2 = {thr['tr_mem_thr']}: "
-        "not probed by the stored-model measurement."
-    )
+    print("\nCrossovers of the dense k-PGM and the Rc-PGM (N at which the k-PGM")
+    print("becomes, and stays, the more expensive), against the thresholds:")
+    print(format_table(crossover_table(b, infos)))
 
-    print(
-        "\nPeak RSS during training (the quantity the training-memory "
-        "condition bounds):"
-    )
-    print(f"  {'N':>6}{'k-PGM':>14}{'Rc-PGM':>14}")
-    for a_row, b_row in zip(k, r, strict=True):
-        print(
-            f"  {a_row['N']:>6}{fmt_bytes(float(a_row['fit_rss_peak'])):>14}"
-            f"{fmt_bytes(float(b_row['fit_rss_peak'])):>14}"
+    print("\nTraining time at the largest N of the sweep, relative to the Rc-PGM:")
+    for c in sorted(infos):
+        cells = _cells(b, c)
+        n_last = float(cells[-1]["N"])
+        last = {
+            r["method"]: float(r["fit_mean"]) for r in cells if float(r["N"]) == n_last
+        }
+        ratios = ", ".join(
+            f"{m} {last[m] / last['rcpgm']:.3g}x" for m in methods if m != "rcpgm"
         )
-
-    last_k, last_r = k[-1], r[-1]
-    ratio = float(last_k["fit_mean"]) / float(last_r["fit_mean"])
-    print(
-        f"\nAt N = {last_k['N']}: k-PGM training {float(last_k['fit_mean']):.0f} s "
-        f"against {float(last_r['fit_mean']):.2f} s for the Rc-PGM, "
-        f"a factor of {ratio:.0f}."
-    )
+        print(f"  c = {c}, N = {n_last:.0f}: {ratios}")
 
     same = all(
-        a_row["accuracy"] == b_row["accuracy"]
-        for a_row, b_row in zip(k, r, strict=True)
+        len({r["accuracy"] for r in _cells(b, c) if r["N"] == n}) == 1
+        for c in infos
+        for n in {r["N"] for r in _cells(b, c)}
     )
-    print(f"Accuracies identical at every N: {same}")
+    print(f"Accuracies identical across the classifiers at every c and N: {same}")
 
     env = b_meta["env"]
     print(

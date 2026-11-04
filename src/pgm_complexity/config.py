@@ -19,25 +19,30 @@ from __future__ import annotations
 # tag.
 BASE_TOL = 1e-10
 
-# Copy numbers of Table 7 of the manuscript (accuracy saturation point).
-TABLE7_C = {
-    "analcatdata_dmft": 4,
-    "balance-scale": 1,
-    "car": 9,
-    "cleveland-nominal": 1,
-    "cloud": 1,
-    "confidence": 5,
-    "ecoli": 8,
-    "haberman": 1,
-    "iris": 2,
-    "led7": 4,
-    "new-thyroid": 5,
-}
-# Default Component A selection: two all-True, two partial, two all-False
-# (regimes according to Table 7).
+# The eleven datasets of Table 7. Their copy numbers are not fixed here: they
+# are chosen by `pgm select` (cross-validation on the training set) and read
+# by Component A from results_selection/selection.csv.
+DATASETS = (
+    "analcatdata_dmft",
+    "balance-scale",
+    "car",
+    "cleveland-nominal",
+    "cloud",
+    "confidence",
+    "ecoli",
+    "haberman",
+    "iris",
+    "led7",
+    "new-thyroid",
+)
+# Default Component A selection: the six datasets of Table 8.
 DEFAULT_A = ["balance-scale", "haberman", "iris", "led7", "ecoli", "car"]
 
 SKIN_FILE = "Skin_NonSkin.txt"
-SKIN_C = 5  # d_raw = 3 -> d_enc = 4, dsym = C(8,5) = 56
+# Component B sweeps N at several copy numbers. d_raw = 3 -> d_enc = 4, so
+# d_sym = C(c + 3, c) = 10, 20, 35, 56, 84, 120 for c = 2 ... 7.
+SKIN_COPIES = [2, 3, 4, 5, 6, 7]
 SKIN_TEST = 2000
-DEFAULT_SWEEP = [250, 500, 1000, 1750, 3000, 5000, 8000]
+# From N = 25, so that the thresholds of the smallest copy numbers (about 13
+# at c = 2) fall inside the sweep, up to N = 8000.
+DEFAULT_SWEEP = [25, 50, 100, 250, 500, 1000, 1750, 3000, 5000, 8000]

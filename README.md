@@ -67,11 +67,15 @@ checks and the harness self-test run without it.
 | Artefact in the paper | Command | Output |
 |---|---|---|
 | **Table 7** and the copy-number sweep of the appendix (copy number chosen by cross-validation, Rc-PGM advantage conditions at every `c`) | `pgm select`<br>`pgm paper tables` | `results_selection/selection.csv`, `selection_sweep.csv`, `selection_meta.json`; the LaTeX rows of Table 7 and of the appendix tables |
-| **Section "Some empirical evidence"**, per-dataset timings | `pgm bench a --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
-| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
+| **Section "Some empirical evidence"**, per-dataset timings, at the copy numbers chosen by `pgm select` | `pgm select`<br>`pgm bench a --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
+| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation at `c = 2 … 7`, for the dense k-PGM, the k-PGM from explicit features and the Rc-PGM | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossovers.csv` (empirical crossover, threshold and their ratio, per `c` and quantity), `componentB_crossover_c{c}.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
 | **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `pgm paper numbers` re-derives every figure quoted in the text |
 | POVM residuals of the truncated measurement (completeness, positivity, retained rank) | `pgm diag povm` | `results_diagnostics/povm.csv`, `povm_meta.json` |
+
+`pgm bench … --outdir DIR` writes a run to `DIR` instead of `results_benchmark/`,
+leaving the deposited run untouched; `pgm paper numbers --results DIR` and
+`pgm bench replot --outdir DIR` read it back.
 
 ## Layout
 
@@ -86,6 +90,7 @@ pgm-repo/
 │   ├── config.py             the constants of the measurement protocol
 │   ├── thresholds.py         the three advantage conditions
 │   ├── selection.py          the copy number chosen by cross-validation
+│   ├── crossovers.py         empirical crossovers of Component B against the thresholds
 │   ├── data/                 specifications, rebuild, verification
 │   ├── bench/                splits, measurement, Components A and B, self-test
 │   ├── figures.py            Figure 4 and its redrawing
@@ -215,9 +220,10 @@ The benchmark harness follows a fixed protocol, and the numbers it reports are
 only comparable across runs that share it:
 
 - **Inputs**: the features are read from the CSV files as stored, with no
-  scaling, and the train/test partition is the one of Table 7 -- so Component A
-  fits the very same models the table describes and reproduces its accuracies
-  exactly, adding only the measurements.
+  scaling, and the train/test partition is the one of Table 7 -- so Component A,
+  run at the copy numbers `pgm select` chose, fits the very same models the
+  table describes and reproduces its test accuracies exactly, adding only the
+  measurements.
 - **Split**: the partition is produced by
   `train_test_split(..., test_size=0.2, shuffle=True, stratify=y,
   random_state=42)`, so the training-set sizes `N` coincide with the tabulated

@@ -32,6 +32,14 @@ from pgm_complexity import ROOT
 SELECTION_DIR = ROOT / "results_selection"
 
 
+def selected_copies(path):
+    """Copy number chosen for each dataset, from a ``selection.csv``."""
+    import csv
+
+    with open(path, newline="") as fh:
+        return {row["dataset"]: int(row["c"]) for row in csv.DictReader(fh)}
+
+
 def cv_accuracy(factory, X, y, c, folds, repeats):
     """Mean accuracy of each repetition of stratified ``folds``-fold CV.
 

@@ -1,4 +1,9 @@
-"""Figure 4: the crossover sweep, and its redrawing from a deposited run."""
+"""Figure 4: the crossover sweep, and its redrawing from a deposited run.
+
+One figure per copy number of the sweep. The crossover marked on it is the one
+of `crossovers.py`, between the dense k-PGM and the Rc-PGM; the k-PGM from
+explicit features is drawn alongside.
+"""
 
 from __future__ import annotations
 
@@ -44,7 +49,7 @@ def _log_ticks(axis, lo, hi):
     axis.set_minor_formatter(NullFormatter())
 
 
-def plot_B(rows, info):
+def plot_B(rows, info, outdir=None, suffix=""):
     import matplotlib
 
     matplotlib.use("Agg")
@@ -59,17 +64,12 @@ def plot_B(rows, info):
         return [p[0] for p in pts], [p[1] for p in pts]
 
     def crossing(attr):
-        """First N at which the k-PGM curve rises above the Rc-PGM one."""
+        """Where the dense k-PGM becomes the more expensive (crossovers.py)."""
+        from pgm_complexity.crossovers import empirical_crossover
+
         xs, yk = series("kpgm", attr)
         _, yr = series("rcpgm", attr)
-        diff = [math.log(a) - math.log(b) for a, b in zip(yk, yr, strict=True)]
-        for i in range(len(xs) - 1):
-            if diff[i] < 0 <= diff[i + 1]:
-                t = -diff[i] / (diff[i + 1] - diff[i])
-                return math.exp(
-                    math.log(xs[i]) + t * (math.log(xs[i + 1]) - math.log(xs[i]))
-                )
-        return None
+        return empirical_crossover(xs, yk, yr)[0]
 
     # The stored model of the k-PGM is the O(N (d + r_{G^c})) term that governs its
     # PREDICTION cost, so the middle panel is compared with the prediction
@@ -82,12 +82,14 @@ def plot_B(rows, info):
 
     fig, axes = plt.subplots(1, 3, figsize=(13.5, 4))
     for ax, (attr, label, thr) in zip(axes, panels, strict=True):
-        for method, name, color in (
-            ("kpgm", "k-PGM", "#C00000"),
-            ("rcpgm", "Rc-PGM", "#1E7B34"),
+        for method, name, color, style in (
+            ("kpgm", "k-PGM (dense)", "#C00000", "o-"),
+            ("kpgm_features", "k-PGM (explicit features)", "#E69F00", "s--"),
+            ("rcpgm", "Rc-PGM", "#1E7B34", "o-"),
         ):
             xs, ys = series(method, attr)
-            ax.plot(xs, ys, "o-", color=color, label=name)
+            if xs:
+                ax.plot(xs, ys, style, color=color, label=name)
         ax.axvline(
             thr,
             color="#1F4E79",
@@ -108,28 +110,36 @@ def plot_B(rows, info):
         ax.set_yscale("log")
         ax.set_xlabel("N (training samples)")
         ax.set_ylabel(label)
+        _log_ticks(ax.xaxis, *ax.get_xlim())
         _log_ticks(ax.yaxis, *ax.get_ylim())
         ax.legend(fontsize=8)
         ax.grid(which="major", alpha=0.3)
         ax.grid(which="minor", alpha=0.15, lw=0.5)
+    c_values = sorted({r.c for r in rows})
+    if c_values:
+        fig.suptitle(f"c = {c_values[0]}, $d_{{sym}}$ = {info['dsym']}", fontsize=10)
     fig.tight_layout()
+    outdir = OUT_DIR if outdir is None else outdir
     for ext in ("png", "pdf"):
-        out = OUT_DIR / f"componentB_crossover.{ext}"
+        out = outdir / f"componentB_crossover{suffix}.{ext}"
         fig.savefig(out, dpi=160)
         print(f"[B] figure -> {out}")
 
 
-def replot_B():
-    """Redraw the Component B figure from the deposited CSV, without measuring.
+def replot_B(outdir=None):
+    """Redraw the Component B figures from the deposited CSV, without measuring.
 
-    The figure is a rendering of `componentB.csv`; regenerating it after a
+    The figures are a rendering of `componentB.csv`; regenerating them after a
     change to the axes or the styling does not require re-running the sweep,
-    and leaves the measurements untouched.
+    and leaves the measurements untouched. Runs with a single copy number
+    (up to v1.0.x) give one figure without suffix; runs over several copy
+    numbers give one figure per c.
     """
     import csv as _csv
 
-    csv_path = OUT_DIR / "componentB.csv"
-    meta_path = OUT_DIR / "componentB_meta.json"
+    outdir = OUT_DIR if outdir is None else outdir
+    csv_path = outdir / "componentB.csv"
+    meta_path = outdir / "componentB_meta.json"
     if not csv_path.exists() or not meta_path.exists():
         raise SystemExit(
             f"{csv_path.name} and {meta_path.name} are both needed; "
@@ -150,8 +160,13 @@ def replot_B():
                     values[key] = float(raw)
             rows.append(Cell(**values))
 
-    info = json.loads(meta_path.read_text())["thresholds"]
-    plot_B(rows, info)
+    thresholds = json.loads(meta_path.read_text())["thresholds"]
+    if "dsym" in thresholds:  # a single copy number
+        plot_B(rows, thresholds, outdir)
+    else:
+        for key, info in thresholds.items():
+            c = int(key)
+            plot_B([r for r in rows if r.c == c], info, outdir, suffix=f"_c{c}")
     print(
         f"[replot] redrawn from {csv_path} ({len(rows)} rows); "
         f"the measurements were not touched."

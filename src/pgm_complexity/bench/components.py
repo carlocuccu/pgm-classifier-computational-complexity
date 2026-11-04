@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import csv
 import json
+from dataclasses import asdict
+from pathlib import Path
 
 import numpy as np
 
@@ -16,21 +19,46 @@ from pgm_complexity.bench.io import (
     write_rows,
 )
 from pgm_complexity.bench.measure import measure
-from pgm_complexity.config import (
-    DEFAULT_SWEEP,
-    SKIN_C,
-    SKIN_TEST,
-    TABLE7_C,
-)
+from pgm_complexity.config import DEFAULT_SWEEP, SKIN_COPIES, SKIN_TEST
+from pgm_complexity.crossovers import crossover_table, format_table
 from pgm_complexity.figures import plot_B
-from pgm_complexity.thresholds import thresholds
+from pgm_complexity.thresholds import dsym_of, thresholds
+
+
+def _outdir(args) -> Path:
+    out = Path(args.outdir).resolve() if getattr(args, "outdir", None) else OUT_DIR
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _copy_numbers(args):
+    """The copy number of each dataset, as chosen by `pgm select`."""
+    from pgm_complexity.selection import SELECTION_DIR, selected_copies
+
+    path = (
+        Path(args.selection).resolve()
+        if getattr(args, "selection", None)
+        else SELECTION_DIR / "selection.csv"
+    )
+    if not path.exists():
+        raise SystemExit(
+            f"{path} not found: Component A runs at the copy numbers chosen by "
+            "`pgm select`; run it first, or point --selection at its output."
+        )
+    chosen = selected_copies(path)
+    missing = [name for name in args.datasets if name not in chosen]
+    if missing:
+        raise SystemExit(f"{path} has no copy number for: {', '.join(missing)}")
+    return chosen, path
 
 
 def component_A(args):
+    outdir = _outdir(args)
+    chosen, selection_path = _copy_numbers(args)
     factories = get_classifiers(include_cpgm=args.include_cpgm)
     rows, meta = [], []
     for name in args.datasets:
-        c = TABLE7_C[name]
+        c = chosen[name]
         X, y = load_dataset(name)
         tr, te = stratified_split(y, 0.2, args.seed)
         Xtr, ytr, Xte, yte = X[tr], y[tr], X[te], y[te]
@@ -104,70 +132,125 @@ def component_A(args):
                 }
             )
 
-    write_rows(OUT_DIR / "componentA.csv", rows)
-    (OUT_DIR / "componentA_meta.json").write_text(
-        json.dumps({"env": env_info(), "meta": meta}, indent=2)
+    write_rows(outdir / "componentA.csv", rows)
+    (outdir / "componentA_meta.json").write_text(
+        json.dumps(
+            {
+                "env": env_info(),
+                "copy_numbers_from": str(selection_path),
+                "meta": meta,
+            },
+            indent=2,
+        )
     )
-    print(f"\n[A] results -> {OUT_DIR / 'componentA.csv'}")
+    print(f"\n[A] results -> {outdir / 'componentA.csv'}")
+
+
+def _rank(method, est) -> int:
+    """Retained rank of a fitted model: r_{G^c} for the k-PGM, the rank of
+    sigma for the Rc-PGM (the same number, by the shared threshold)."""
+    if method == "rcpgm":
+        return int(est.rank_sigma_)
+    return int(est.lam_inv_sqrt.shape[0])
 
 
 def component_B(args):
+    """The sweep over N on Skin Segmentation, at every copy number of
+    ``args.copies``, for the dense k-PGM, the k-PGM from explicit features and
+    the Rc-PGM; then the empirical crossovers against the thresholds."""
+    outdir = _outdir(args)
     factories = get_classifiers()
     X, y = load_dataset("skin")
-    d_raw, c, l = X.shape[1], SKIN_C, len(np.unique(y))
+    d_raw, l = X.shape[1], len(np.unique(y))
+    copies = list(getattr(args, "copies", None) or SKIN_COPIES)
     rng_split = stratified_subsample(y, SKIN_TEST, args.seed)
     mask = np.zeros(len(y), bool)
     mask[rng_split] = True
     Xte, yte = X[mask], y[mask]
     Xpool, ypool = X[~mask], y[~mask]
 
-    info = thresholds(max(DEFAULT_SWEEP), d_raw, c, l)
-    print(
-        f"[B] Skin: d={d_raw}, c={c}, l={l}, dsym={info['dsym']}  |  theoretical "
-        f"thresholds: train-time N*≈{info['tr_time_thr']:.0f}, "
-        f"train-mem N*={info['tr_mem_thr']}, pred N*≈{info['pred_thr']:.0f}"
-    )
-
     grid = [n for n in (args.sweep or DEFAULT_SWEEP) if n <= args.nmax]
-    rows = []
-    for n in grid:
-        idx = stratified_subsample(ypool, n, args.seed + n)
-        Xtr, ytr = Xpool[idx], ypool[idx]
-        print(f"\n--- N = {len(idx)} ---")
-        for method in ("kpgm", "rcpgm"):
-            cell, _ = measure(
-                method,
-                factories[method],
-                c,
-                Xtr,
-                ytr,
-                Xte,
-                yte,
-                f"skin_N{len(idx)}",
-                args.reps,
-            )
-            print(
-                f"  {method:6s} fit {cell.fit_mean:9.4f} ± {cell.fit_std:7.4f} s | "
-                f"pred {cell.pred_mean:8.4f} ± {cell.pred_std:6.4f} s | "
-                f"peak ΔRSS fit {cell.fit_rss_peak / 1e6:8.1f} MB | "
-                f"model {cell.model_bytes / 1e6:8.1f} MB | acc {cell.accuracy:.4f}"
-            )
-            rows.append(cell)
+    # The same training sets at every copy number.
+    subsets = {n: stratified_subsample(ypool, n, args.seed + n) for n in grid}
+    methods = ("kpgm", "kpgm_features", "rcpgm")
 
-    write_rows(OUT_DIR / "componentB.csv", rows)
-    (OUT_DIR / "componentB_meta.json").write_text(
+    rows, ranks, infos = [], {}, {}
+    for c in copies:
+        print(f"\n[B] Skin: d={d_raw}, c={c}, l={l}, dsym={dsym_of(d_raw, c)}")
+        ranks[c] = {}
+        for n in grid:
+            idx = subsets[n]
+            Xtr, ytr = Xpool[idx], ypool[idx]
+            print(f"--- c = {c}, N = {len(idx)} ---")
+            for method in methods:
+                cell, holder = measure(
+                    method,
+                    factories[method],
+                    c,
+                    Xtr,
+                    ytr,
+                    Xte,
+                    yte,
+                    f"skin_N{len(idx)}",
+                    args.reps,
+                )
+                if method == "kpgm":
+                    ranks[c][len(idx)] = _rank(method, holder["est"])
+                print(
+                    f"  {method:13s} fit {cell.fit_mean:9.4f} ± {cell.fit_std:7.4f} s | "
+                    f"pred {cell.pred_mean:8.4f} ± {cell.pred_std:6.4f} s | "
+                    f"peak ΔRSS fit {cell.fit_rss_peak / 1e6:8.1f} MB | "
+                    f"model {cell.model_bytes / 1e6:8.1f} MB | acc {cell.accuracy:.4f}"
+                )
+                rows.append(cell)
+
+        # Thresholds at the largest N of the sweep, with the rank retained
+        # there and the fraction of the largest class in that training set.
+        n_last = len(subsets[grid[-1]])
+        y_last = ypool[subsets[grid[-1]]]
+        fraction = float(np.max(np.unique(y_last, return_counts=True)[1]) / n_last)
+        infos[c] = thresholds(
+            n_last, d_raw, c, l, r_g=ranks[c][n_last], class_fraction=fraction
+        )
+
+    write_rows(outdir / "componentB.csv", rows)
+    table = crossover_table([asdict(cell) for cell in rows], infos)
+    with open(outdir / "componentB_crossovers.csv", "w", newline="") as fh:
+        fields = [
+            "c",
+            "dsym",
+            "quantity",
+            "theoretical",
+            "theoretical_class",
+            "empirical",
+            "status",
+            "ratio",
+        ]
+        w = csv.DictWriter(fh, fieldnames=fields)
+        w.writeheader()
+        w.writerows(table)
+    (outdir / "componentB_meta.json").write_text(
         json.dumps(
             {
                 "env": env_info(),
-                "thresholds": info,
+                "copies": copies,
+                "methods": list(methods),
+                "thresholds": {str(c): info for c, info in infos.items()},
+                "ranks": {
+                    str(c): {str(n): r for n, r in rk.items()}
+                    for c, rk in ranks.items()
+                },
                 "grid": grid,
                 "test_size": int(mask.sum()),
             },
             indent=2,
         )
     )
-    print(f"\n[B] results -> {OUT_DIR / 'componentB.csv'}")
+    print(f"\n[B] results -> {outdir / 'componentB.csv'}")
+    print("\n[B] crossovers of the dense k-PGM and the Rc-PGM:")
+    print(format_table(table))
     try:
-        plot_B(rows, info)
+        for c in copies:
+            plot_B([r for r in rows if r.c == c], infos[c], outdir, suffix=f"_c{c}")
     except Exception as exc:  # matplotlib optional
         print(f"[B] plot skipped ({exc}); use componentB.csv")

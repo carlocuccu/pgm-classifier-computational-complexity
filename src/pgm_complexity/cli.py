@@ -70,17 +70,19 @@ def _data_sources(args) -> int:
 # ---------------------------------------------------------------------------
 def _bench(args) -> int:
     import json
+    from pathlib import Path
 
     from pgm_complexity import OUT_DIR
     from pgm_complexity.bench.io import env_info
 
-    OUT_DIR.mkdir(exist_ok=True)
+    outdir = Path(args.outdir).resolve() if args.outdir else OUT_DIR
+    outdir.mkdir(parents=True, exist_ok=True)
     print(f"[env] {json.dumps(env_info())}")
 
     if args.what == "replot":
         from pgm_complexity.figures import replot_B
 
-        return replot_B()
+        return replot_B(outdir)
 
     if args.what == "selftest":
         from pgm_complexity.bench.selftest import selftest
@@ -209,7 +211,7 @@ def build_parser() -> argparse.ArgumentParser:
     sources.set_defaults(func=_data_sources)
 
     # -- bench --------------------------------------------------------------
-    from pgm_complexity.config import DEFAULT_A, TABLE7_C
+    from pgm_complexity.config import DATASETS, DEFAULT_A, SKIN_COPIES
 
     bench = sub.add_parser("bench", help="run the measurements")
     bench.add_argument(
@@ -223,7 +225,7 @@ def build_parser() -> argparse.ArgumentParser:
     bench.add_argument("--seed", type=int, default=42)
     bench.add_argument("--threads", type=int, default=1)
     bench.add_argument(
-        "--datasets", nargs="+", default=DEFAULT_A, choices=sorted(TABLE7_C)
+        "--datasets", nargs="+", default=DEFAULT_A, choices=sorted(DATASETS)
     )
     bench.add_argument(
         "--include-cpgm",
@@ -234,6 +236,20 @@ def build_parser() -> argparse.ArgumentParser:
     bench.add_argument("--mem-limit-gb", type=float, default=8.0)
     bench.add_argument("--nmax", type=int, default=8000)
     bench.add_argument("--sweep", nargs="+", type=int, default=None)
+    bench.add_argument(
+        "--copies",
+        nargs="+",
+        type=int,
+        default=SKIN_COPIES,
+        metavar="C",
+        help="copy numbers of the Component B sweep",
+    )
+    bench.add_argument(
+        "--selection",
+        default=None,
+        help="copy numbers of Component A; default: results_selection/selection.csv",
+    )
+    bench.add_argument("--outdir", default=None, help="default: results_benchmark/")
     bench.set_defaults(func=_bench)
 
     # -- paper --------------------------------------------------------------
@@ -259,7 +275,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="completeness and positivity of the truncated PGM, per dataset and c",
     )
     povm.add_argument(
-        "--datasets", nargs="+", default=sorted(TABLE7_C), choices=sorted(TABLE7_C)
+        "--datasets", nargs="+", default=sorted(DATASETS), choices=sorted(DATASETS)
     )
     povm.add_argument(
         "--copies", nargs="+", type=int, default=list(range(1, 10)), metavar="C"
@@ -275,7 +291,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="choose c by cross-validation on the training set (Table 7, App. B)",
     )
     select.add_argument(
-        "--datasets", nargs="+", default=sorted(TABLE7_C), choices=sorted(TABLE7_C)
+        "--datasets", nargs="+", default=sorted(DATASETS), choices=sorted(DATASETS)
     )
     select.add_argument(
         "--copies", nargs="+", type=int, default=list(range(1, 10)), metavar="C"
