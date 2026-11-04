@@ -39,8 +39,8 @@ Useful options:
 
 The eleven CSV files are **header-less**, comma-separated, CRLF-terminated,
 and the **last column is the integer class label**, taking the consecutive
-values `0 .. l-1`. This is the layout that `notebooks/table7.ipynb` and
-the harness read with `pandas.read_csv(path, header=None)`.
+values `0 .. l-1`. This is the layout that `pgm select` and the harness
+read.
 `Skin_NonSkin.txt` is tab-separated and header-less, with three integer
 features and the class label in `{1,2}`.
 
@@ -98,7 +98,7 @@ verbatim.
 
 ## Row order
 
-The row order is not a detail of presentation: the notebook and the harness
+The row order is not a detail of presentation: `pgm select` and the harness
 split the data with `train_test_split(..., shuffle=True, stratify=y,
 random_state=42)`, whose outcome is seeded but depends on the order of the
 input rows. A file with the same rows in a different order gives different

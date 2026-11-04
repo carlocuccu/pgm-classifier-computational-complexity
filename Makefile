@@ -69,9 +69,10 @@ numbers:
 # the Skin Segmentation dataset up to N = 8000 and takes hours on one core:
 # this is the long path, not a smoke test. `make test` is the quick one.
 repro: estimators data
+	$(UV) run --extra estimators pgm select
 	$(UV) run --extra estimators pgm bench a --reps 5
 	$(UV) run --extra estimators pgm bench b --reps 3
 	$(UV) run pgm paper numbers
 
 clean:
-	rm -rf .pytest_cache .ruff_cache **/__pycache__ results_table7*.csv
+	rm -rf .pytest_cache .ruff_cache **/__pycache__

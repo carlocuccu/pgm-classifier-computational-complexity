@@ -79,16 +79,18 @@ def test_retained_rank_defaults_to_its_upper_bound(harness):
 
 
 @pytest.mark.parametrize("row", TABLE7, ids=lambda r: r[0])
-def test_conditions_are_monotone_in_the_copy_number(harness, row):
-    """Each advantage holds on an initial segment of copy numbers.
+def test_training_conditions_are_monotone_in_the_copy_number(harness, row):
+    """The two training conditions hold on an initial segment of copy numbers.
 
-    d_sym grows with c while N, l and d do not, so once a condition fails it
-    fails for every larger c. This is what lets the table be read as a snapshot
-    of a monotone trade-off rather than as an isolated measurement, and it is
-    the property the appendix sweep table summarises with three integers.
+    Their thresholds depend on c only through d_sym, which grows with c, while
+    N and l do not: once a training condition fails it fails for every larger
+    c. The prediction condition also depends on the retained rank r_{G^c},
+    which changes with c in a data-dependent way, so no such property is
+    claimed for it; `pgm select` evaluates it at every c with the rank of
+    that c.
     """
     _, n, d, _, l, *_ = row
-    for name in ("tr_time_thr", "tr_mem_thr", "pred_thr"):
+    for name in ("tr_time_thr", "tr_mem_thr"):
         holds = [
             n > harness.thresholds(N=n, d_raw=d - 1, c=c, l=l)[name]
             for c in range(1, 10)

@@ -17,13 +17,13 @@ from pgm_complexity.threads import THREAD_VARS
 
 
 def stratified_split(y, test_frac=0.2, seed=42):
-    """Stratified train/test split, identical to the one of the Table 7 notebook.
+    """Stratified train/test split, shared by `pgm select`, the benchmarks
+    and the diagnostics.
 
     `sklearn.model_selection.train_test_split(..., shuffle=True, stratify=y,
-    random_state=seed)` is used so that the training-set sizes N reported by the
-    benchmarks coincide with those of Table 7; the partition depends only on `y`
-    and on the seed, so splitting the index array reproduces the notebook's
-    split of the data frame exactly.
+    random_state=seed)` is used, so that the training-set sizes N reported by
+    the benchmarks coincide with those of Table 7; the partition depends only
+    on `y` and on the seed.
 
     A numpy fallback keeps `selftest` runnable in an environment without
     scikit-learn; it rounds per class and can therefore differ by a unit or two
@@ -64,11 +64,10 @@ def stratified_subsample(y, n, seed):
 def load_dataset(name: str):
     """CSV with the class label in the LAST column; Skin file is TSV.
 
-    The features are used exactly as stored, with no scaling: this is what the
-    Table 7 notebook does, and the amplitude encoding of the estimators
-    normalises every sample to the unit sphere anyway. Together with the split
-    of `stratified_split`, it makes the benchmarks fit the very same models the
-    table describes, down to the reported accuracies.
+    The features are used exactly as stored, with no scaling: the amplitude
+    encoding of the estimators normalises every sample to the unit sphere
+    anyway. Together with the split of `stratified_split`, it makes the
+    benchmarks fit the very same models as `pgm select`.
     """
     path = DATA_DIR / (SKIN_FILE if name == "skin" else f"{name}.csv")
     if not path.exists():

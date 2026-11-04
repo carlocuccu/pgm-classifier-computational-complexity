@@ -5,7 +5,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Code, data and notebooks accompanying
+Code and data accompanying
 
 > C. Cuccu, G. Sergioli, R. Giuntini, A. C. Granda Arango, R. Era,
 > *Computational Complexity Analysis of Quantum-Inspired Pretty Good Measurement
@@ -59,14 +59,14 @@ byte-identical to the ones used in the paper. Files already present and already
 correct are left alone; `--check` re-verifies them without touching the
 network, and `--help` prints the full provenance of every dataset.
 
-`torch` is required by the three estimators and by the notebook. The dataset
+`torch` is required by the three estimators and by `pgm select`. The dataset
 checks and the harness self-test run without it.
 
 ## What produces what
 
 | Artefact in the paper | Command | Output |
 |---|---|---|
-| **Table 7** (accuracy saturation and Rc-PGM advantage conditions) | `jupyter notebook notebooks/table7.ipynb` | `results_table7.csv` and the LaTeX body of the table |
+| **Table 7** and the copy-number sweep of the appendix (copy number chosen by cross-validation, Rc-PGM advantage conditions at every `c`) | `pgm select`<br>`pgm paper tables` | `results_selection/selection.csv`, `selection_sweep.csv`, `selection_meta.json`; the LaTeX rows of Table 7 and of the appendix tables |
 | **Section "Some empirical evidence"**, per-dataset timings | `pgm bench a --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
 | **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossover.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
@@ -85,13 +85,13 @@ pgm-repo/
 │   ├── cli.py                pins the BLAS threads, then dispatches
 │   ├── config.py             the constants of the measurement protocol
 │   ├── thresholds.py         the three advantage conditions
+│   ├── selection.py          the copy number chosen by cross-validation
 │   ├── data/                 specifications, rebuild, verification
 │   ├── bench/                splits, measurement, Components A and B, self-test
 │   ├── figures.py            Figure 4 and its redrawing
 │   └── paper.py              every figure the empirical section quotes
 ├── qunica/                   the estimators as published with the paper
 ├── tests/                    what holds on any machine: identities, invariants, digests
-├── notebooks/table7.ipynb    regenerates Table 7
 ├── datasets/                 empty; filled by `pgm data fetch`
 ├── results_benchmark/        the measurements reported in the paper, as produced
 ├── figures/                  the three figures of the paper
@@ -149,37 +149,40 @@ preferable to the k-PGM when
 
 The full prediction cost of the k-PGM is `O(N(d + r_{G^c}))` in both time and
 memory, so a single threshold governs the two prediction metrics. These are the
-inequalities evaluated in Table 7, and the ones `notebooks/table7.ipynb`
-recomputes for every dataset.
+inequalities evaluated in Table 7, and the ones `pgm select` recomputes for
+every dataset at every copy number.
 
 ## Table 7: how the copy number is chosen
 
-`notebooks/table7.ipynb` fits the k-PGM at **every** copy number of a fixed grid,
-`c = 1 … MAX_COPIES` (currently 9), for every dataset — an exhaustive sweep, with
-no early stopping and no per-dataset range. The row carried into Table 7 is the
-**smallest `c` attaining the maximum test-set accuracy** on that grid (`idxmax`
-keeps the first occurrence). It is an argmax over the grid, not a
-plateau-detection criterion and not a visual reading: where the accuracy is flat,
-the smallest `c` of the plateau is the one reported.
+`pgm select` chooses the copy number on the training set only. For every
+dataset it draws the seeded stratified 80/20 split of the harness
+(`random_state=42`) and, on the training part, runs stratified 5-fold
+cross-validation of the k-PGM at every `c` of the grid `c = 1 … 9`, repeated 10
+times with different fold assignments (`random_state = 0 … 9`). The selected
+`c` follows the **one-standard-error rule**: the smallest `c` whose mean
+cross-validated accuracy is within one standard error of the largest one, the
+standard error being the standard deviation of the 10 per-repetition accuracies
+divided by √10. Where the accuracy curve is flat this keeps the cheaper copy
+number instead of one ahead by a difference within the noise; the `c` of the
+largest mean is recorded as well (`cv_argmax`). The test part plays no role in the choice: the model refitted on
+the whole training set is evaluated on it once per `c`, and that accuracy is
+only reported.
 
-The accuracies come from **one** seeded stratified 80/20 split
-(`random_state=42`) — the same split the harness uses, which is why
-Component A reproduces them exactly. They are therefore single-split point
-estimates, with no repetitions and no confidence interval; on the smaller
-datasets the test set is small (15 samples for `confidence`, 22 for `cloud`, 30
-for `iris`), so one misclassification moves the accuracy by several points.
+The same refit gives the retained rank `r_{G^c}` at every `c`, and the three
+advantage conditions are evaluated at every copy number of the grid with the
+rank of that `c`. The two training conditions depend on `c` only through
+`d_sym`, so each of them holds up to some `c` and fails beyond it; the
+prediction condition also depends on `r_{G^c}`, and is reported at every `c`
+rather than summarised.
 
-The notebook makes the process auditable: it prints the whole accuracy-vs-`c`
-curve with the selected point starred, flags the two cases that must not be read
-as saturation — `c* = 1` (copies bring no gain) and `c* = MAX_COPIES` (the
-maximum sits at the edge of the grid, so the accuracy may still be rising) — and
-writes the complete sweep to `results_table7_sweep.csv`.
-
-The accuracy plays no part in the advantage conditions themselves: it only fixes
-the `c` at which they are evaluated. Each condition compares a quantity growing
-with `d_sym` against one that does not, so each holds for every `c` up to some
-value and fails beyond it; the conditions can be recomputed at any other `c`
-straight from `N`, `l`, `d` and `d_sym`.
+The output is the whole sweep (`selection_sweep.csv`: mean, standard
+deviation and standard error over the repetitions of the CV accuracy, test accuracy, `d_sym`,
+`r_{G^c}`, thresholds and flags, for every dataset and every `c`), the selected
+row of each dataset (`selection.csv`) and the protocol (`selection_meta.json`).
+A selected `c` equal to the last value of the grid is flagged on screen.
+`pgm paper tables` reads them back and prints the LaTeX rows of Table 7 and of
+the two appendix tables (mean CV accuracy and the three conditions at every
+`c`, the selected one in boldface), so that no number is copied by hand.
 
 ## Working on it
 

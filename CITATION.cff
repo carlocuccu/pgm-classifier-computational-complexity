@@ -4,8 +4,8 @@ title: "Computational Complexity Analysis of Quantum-Inspired Pretty Good Measur
 abstract: >-
   Implementations of the copy-dependent (c-PGM), kernelized (k-PGM) and
   symmetric-subspace-reduced (Rc-PGM) Pretty Good Measurement classifiers,
-  together with the benchmark harness, the notebook and the dataset
-  preparation script that reproduce the empirical section of the accompanying
+  together with the benchmark harness, the copy-number selection and the
+  dataset preparation script that reproduce the empirical section of the accompanying
   paper.
 type: software
 license: MIT

@@ -236,3 +236,109 @@ def component_b_report(b, b_meta) -> None:
         f"torch {env.get('torch')}, threads {env['threads']}, "
         f"threshold {_threshold(env)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Table 7 and the copy-number sweep of the appendix, from `pgm select`
+# ---------------------------------------------------------------------------
+def load_selection(results: Path):
+    """The sweep and the protocol written by `pgm select`."""
+    sweep = list(csv.DictReader((results / "selection_sweep.csv").open()))
+    meta = json.loads((results / "selection_meta.json").read_text())
+    return sweep, meta
+
+
+def _by_dataset(sweep):
+    out: dict[str, list[dict]] = {}
+    for row in sweep:
+        out.setdefault(row["dataset"], []).append(row)
+    for rows in out.values():
+        rows.sort(key=lambda r: int(r["c"]))
+    return dict(sorted(out.items()))
+
+
+def _flag(value: str) -> str:
+    return "True" if value == "True" else "False"
+
+
+def table7_rows(sweep) -> str:
+    """LaTeX body of Table 7: one row per dataset, at the selected c.
+
+    Columns: dataset, N, d, c, l, d_sym, r_{G^c}, CV accuracy (mean and
+    standard deviation over the repetitions), test accuracy, and the
+    training-time, training-memory and prediction flags.
+    """
+    lines = []
+    for name, rows in _by_dataset(sweep).items():
+        r = next(r for r in rows if r["selected"] == "True")
+        lines.append(
+            f"{name.replace('_', ' ')} & {r['N']} & {r['d_enc']} & {r['c']} & "
+            f"{r['l']} & {r['dsym']} & {r['r_Gc']} & "
+            f"{float(r['cv_mean']):.3f} $\\pm$ {float(r['cv_std']):.3f} & "
+            f"{float(r['test_acc']):.3f} & {_flag(r['win_tr_time'])} & "
+            f"{_flag(r['win_tr_mem'])} & {_flag(r['win_pred'])} \\\\"
+        )
+    return "\n".join(lines)
+
+
+def sweep_accuracy_rows(sweep) -> str:
+    """LaTeX body of the appendix accuracy table: the mean CV accuracy of
+    every dataset at every c, the selected c in boldface."""
+    lines = []
+    for name, rows in _by_dataset(sweep).items():
+        cells = [
+            bold(f"{float(r['cv_mean']):.3f}", r["selected"] == "True") for r in rows
+        ]
+        lines.append(f"{name.replace('_', ' ')} & " + " & ".join(cells) + " \\\\")
+    return "\n".join(lines)
+
+
+def sweep_flag_rows(sweep) -> str:
+    """LaTeX body of the appendix flag table: at every c, the three
+    conditions as a triple of T/F (training time, training memory,
+    prediction), each evaluated with the r_{G^c} of that c."""
+
+    def tf(value: str) -> str:
+        return "T" if value == "True" else "F"
+
+    lines = []
+    for name, rows in _by_dataset(sweep).items():
+        cells = [
+            bold(
+                tf(r["win_tr_time"]) + tf(r["win_tr_mem"]) + tf(r["win_pred"]),
+                r["selected"] == "True",
+            )
+            for r in rows
+        ]
+        lines.append(f"{name.replace('_', ' ')} & " + " & ".join(cells) + " \\\\")
+    return "\n".join(lines)
+
+
+def selection_report(sweep, meta) -> None:
+    copies = meta["copies"]
+    print(
+        f"% pgm select: {meta['folds']}-fold CV x {meta['repeats']} repetitions on "
+        f"the training set, split seed {meta['split_seed']}, c = "
+        f"{copies[0]}..{copies[-1]}; rule: {meta['rule']}; threshold "
+        f"{_threshold(meta['env'])}"
+    )
+    print(
+        "\n% Table 7: dataset & N & d & c & l & d_sym & r_Gc & CV acc. & test acc. "
+        "& train time & train memory & prediction"
+    )
+    print(table7_rows(sweep))
+    print("\n% Appendix: mean CV accuracy at c = " + ", ".join(map(str, copies)))
+    print(sweep_accuracy_rows(sweep))
+    print(
+        "\n% Appendix: conditions at c = "
+        + ", ".join(map(str, copies))
+        + " (training time, training memory, prediction)"
+    )
+    print(sweep_flag_rows(sweep))
+    edge = [
+        name
+        for name, rows in _by_dataset(sweep).items()
+        if any(r["selected"] == "True" and int(r["c"]) == copies[-1] for r in rows)
+    ]
+    if edge:
+        print(f"\n% selected c at the last value of the grid: {', '.join(edge)}")

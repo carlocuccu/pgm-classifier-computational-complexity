@@ -2,8 +2,9 @@
 
     pgm data fetch | check | sources
     pgm bench a | b | all | selftest | replot
-    pgm paper numbers
+    pgm paper numbers | tables
     pgm diag povm
+    pgm select
 
 Two things about this module are deliberate and easy to undo by accident.
 
@@ -117,6 +118,22 @@ def _paper(args) -> int:
     return 0
 
 
+def _paper_tables(args) -> int:
+    from pathlib import Path
+
+    from pgm_complexity.paper import load_selection, selection_report
+    from pgm_complexity.selection import SELECTION_DIR
+
+    results = Path(args.results).resolve() if args.results else SELECTION_DIR
+    if not (results / "selection_sweep.csv").exists():
+        raise SystemExit(
+            f"no selection run in {results}: run `pgm select` first, "
+            "or point --results at one."
+        )
+    selection_report(*load_selection(results))
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # pgm diag
 # ---------------------------------------------------------------------------
@@ -131,6 +148,26 @@ def _diag_povm(args) -> int:
         args.copies,
         seed=args.seed,
         mem_limit_gb=args.mem_limit_gb,
+        outdir=outdir,
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# pgm select
+# ---------------------------------------------------------------------------
+def _select(args) -> int:
+    from pathlib import Path
+
+    from pgm_complexity.selection import selection_table
+
+    outdir = Path(args.outdir).resolve() if args.outdir else None
+    selection_table(
+        args.datasets,
+        args.copies,
+        folds=args.folds,
+        repeats=args.repeats,
+        seed=args.seed,
         outdir=outdir,
     )
     return 0
@@ -207,6 +244,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     numbers.add_argument("--results", default=None, help="default: results_benchmark/")
     numbers.set_defaults(func=_paper)
+    tables = paper_sub.add_parser(
+        "tables",
+        help="LaTeX rows of Table 7 and of the copy-number sweep, from `pgm select`",
+    )
+    tables.add_argument("--results", default=None, help="default: results_selection/")
+    tables.set_defaults(func=_paper_tables)
 
     # -- diag ---------------------------------------------------------------
     diag = sub.add_parser("diag", help="numerical diagnostics of the estimators")
@@ -225,6 +268,25 @@ def build_parser() -> argparse.ArgumentParser:
     povm.add_argument("--mem-limit-gb", type=float, default=8.0)
     povm.add_argument("--outdir", default=None, help="default: results_diagnostics/")
     povm.set_defaults(func=_diag_povm)
+
+    # -- select -------------------------------------------------------------
+    select = sub.add_parser(
+        "select",
+        help="choose c by cross-validation on the training set (Table 7, App. B)",
+    )
+    select.add_argument(
+        "--datasets", nargs="+", default=sorted(TABLE7_C), choices=sorted(TABLE7_C)
+    )
+    select.add_argument(
+        "--copies", nargs="+", type=int, default=list(range(1, 10)), metavar="C"
+    )
+    select.add_argument("--folds", type=int, default=5)
+    select.add_argument("--repeats", type=int, default=10)
+    select.add_argument(
+        "--seed", type=int, default=42, help="seed of the train/test split"
+    )
+    select.add_argument("--outdir", default=None, help="default: results_selection/")
+    select.set_defaults(func=_select)
 
     return parser
 

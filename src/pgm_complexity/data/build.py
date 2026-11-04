@@ -1,8 +1,8 @@
 """Download and prepare every dataset used in the paper.
 
 This is the only file needed to obtain the data: run it and `datasets/` is
-filled with the twelve files that `notebooks/table7.ipynb` and the benchmark
-harness (`pgm bench`) read.
+filled with the twelve files that `pgm select` and the benchmark harness
+(`pgm bench`) read.
 
     pgm data fetch
 
@@ -96,7 +96,7 @@ shifted by one here.
 
 Row order
 ---------
-The row order is not a detail of presentation. The notebook and the harness
+The row order is not a detail of presentation. `pgm select` and the harness
 split the data with `train_test_split(..., shuffle=True, stratify=y,
 random_state=42)`, whose outcome is seeded but depends on the order of the
 input rows: the same rows in a different order give different accuracies --
