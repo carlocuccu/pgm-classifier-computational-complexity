@@ -81,10 +81,12 @@ def povm_residuals(model) -> PovmResiduals:
     )
 
 
-def _estimated_bytes(l: int, dsym: int) -> int:
-    # Same calibrated estimate as Component A (2l persistent d_sym x d_sym
-    # matrices plus ~5 transients, float64), plus one more for the residuals.
-    return (2 * l + 6) * dsym * dsym * 8
+def _estimated_bytes(n: int, n_max: int, l: int, dsym: int) -> int:
+    # The fit peak of the Rc-PGM (see thresholds.rcpgm_fit_peak_bytes), plus
+    # one more d_sym x d_sym matrix for the residuals.
+    from pgm_complexity.thresholds import rcpgm_fit_peak_bytes
+
+    return rcpgm_fit_peak_bytes(n, n_max, l, dsym) + 8 * dsym * dsym
 
 
 def povm_table(datasets, copies, seed=42, mem_limit_gb=8.0, outdir=None):
@@ -112,7 +114,8 @@ def povm_table(datasets, copies, seed=42, mem_limit_gb=8.0, outdir=None):
         l = len(np.unique(ytr))
         for c in copies:
             dsym = dsym_of(X.shape[1], c)
-            need = _estimated_bytes(l, dsym)
+            n_max = int(np.max(np.unique(ytr, return_counts=True)[1]))
+            need = _estimated_bytes(len(Xtr), n_max, l, dsym)
             if need > mem_limit_gb * 1e9:
                 print(
                     f"[skip] {name} c={c}: d_sym={dsym}, estimated "

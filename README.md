@@ -66,12 +66,17 @@ checks and the harness self-test run without it.
 
 | Artefact in the paper | Command | Output |
 |---|---|---|
-| **Table 7** and the copy-number sweep of the appendix (copy number chosen by cross-validation, Rc-PGM advantage conditions at every `c`) | `pgm select`<br>`pgm paper tables` | `results_selection/selection.csv`, `selection_sweep.csv`, `selection_meta.json`; the LaTeX rows of Table 7 and of the appendix tables |
-| **Section "Some empirical evidence"**, per-dataset timings, at the copy numbers chosen by `pgm select` | `pgm select`<br>`pgm bench a --reps 5` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
+| **Table 7** and the copy-number sweep of the appendix (copy number chosen by cross-validation, Rc-PGM advantage conditions at every `c`) | `pgm select`<br>`pgm paper tables > results_selection/tables.tex` | `results_selection/selection.csv`, `selection_sweep.csv`, `selection_meta.json`; the LaTeX rows of Table 7 and of the appendix tables |
+| **Section "Some empirical evidence"**, per-dataset timings, at the copy numbers chosen by `pgm select` | `pgm select`<br>`pgm bench a --reps 5 --mem-limit-gb 500` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
 | **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation at `c = 2 … 7`, for the dense k-PGM, the k-PGM from explicit features and the Rc-PGM | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossovers.csv` (empirical crossover, threshold and their ratio, per `c` and quantity), `componentB_crossover_c{c}.png` |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
-| **Table 8, Figure 4** | the measurements as reported | already in `results_benchmark/`; `pgm paper numbers` re-derives every figure quoted in the text |
-| POVM residuals of the truncated measurement (completeness, positivity, retained rank) | `pgm diag povm` | `results_diagnostics/povm.csv`, `povm_meta.json` |
+| **Tables 7 and 8, Figure 4, the appendices** | the runs as reported | already in `results_benchmark/`, `results_selection/` and `results_diagnostics/`; `pgm paper numbers` and `pgm paper tables` re-derive every figure and table row quoted in the text |
+| POVM residuals of the truncated measurement (completeness, positivity, retained rank) | `pgm diag povm --mem-limit-gb 500` | `results_diagnostics/povm.csv`, `povm_meta.json` |
+
+`--mem-limit-gb` is not a cap on memory: a configuration whose estimated peak
+exceeds it is skipped and reported with `[skip]`. The default, 8 GB, skips car
+and ecoli at the larger copy numbers; the deposited run used 500 and skipped
+nothing.
 
 `pgm bench … --outdir DIR` writes a run to `DIR` instead of `results_benchmark/`,
 leaving the deposited run untouched; `pgm paper numbers --results DIR` and
@@ -99,6 +104,8 @@ pgm-repo/
 ├── tests/                    what holds on any machine: identities, invariants, digests
 ├── datasets/                 empty; filled by `pgm data fetch`
 ├── results_benchmark/        the measurements reported in the paper, as produced
+├── results_selection/        the copy-number selection behind Table 7
+├── results_diagnostics/      the residuals of the truncated measurement
 ├── figures/                  the three figures of the paper
 └── docs/
     ├── datasets.md           sources, licences and transformations of the data
@@ -200,15 +207,13 @@ the two appendix tables (mean CV accuracy and the three conditions at every
 | `make data` / `make check` | rebuild the datasets / verify them offline |
 | `make selftest` | the measurement pipeline end to end, with numpy stand-ins |
 | `make figure` / `make numbers` | redraw Figure 4 · re-derive the quoted figures |
-| `make repro` | the full reproduction, hours on one core |
+| `make repro` | the full reproduction: hours on one core, about 200 GB of memory; overwrites the deposited results |
 
-Two environments, kept apart on purpose. `uv.lock` is the working one, on a
-current interpreter. The one the deposited measurements were taken in —
-numpy 1.26.4, scipy 1.14.1, torch 1.13.1 — is `requirements-repro.txt`, outside
-the lock: torch 1.13.1 stops at CPython 3.11, and a pin that old inside the
-resolution propagates everywhere and makes the lockfile uninstallable on
-anything newer. It is a record of a 2022 stack, not something to build against,
-and `docs/environment.md` describes the machine around it.
+The deposited measurements were taken in the locked environment, synced with
+`uv sync --locked --group dev --extra estimators` from tag `v1.1.0-rc1`
+(Python 3.14.7, numpy 2.5.2, torch 2.13.0); `docs/environment.md` describes the
+machine. The runs of v1.0.x used an older stack (Python 3.10, torch 1.13.1),
+recorded in `requirements-repro.txt` at tag `v1.0.1`.
 
 `qunica/` is exempt from formatting and from style rules: it is the estimator
 code published with the paper, kept verbatim so the measurements can be
@@ -248,11 +253,13 @@ only comparable across runs that share it:
   three outcomes: exact agreement; near-agreement, whose residual mismatches
   come from eigenvalues sitting at the truncation threshold; and a real
   disagreement, which makes the timings incomparable.
-- `results_benchmark/*_meta.json` records the environment of the run. Copy it
-  into `docs/environment.md` when reporting results.
-- **The reported runs are committed** under `results_benchmark/`, together with
-  a note on how they were produced. The harness writes into that same
-  directory, so a re-run overwrites them: check `git status` before committing.
+- Every `*_meta.json` records the environment of its run. Copy it into
+  `docs/environment.md` when reporting results.
+- **The reported runs are committed** under `results_benchmark/`,
+  `results_selection/` and `results_diagnostics/`, together with a note on how
+  they were produced (`results_benchmark/README.md`). The commands write into
+  those same directories, so a re-run overwrites them: check `git status`
+  before committing, or write elsewhere with `--outdir`.
 
 ## Datasets
 

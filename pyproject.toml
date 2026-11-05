@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pgm-complexity"
-version = "1.0.0"
+version = "1.1.0"
 description = "Complexity analysis and benchmarks of three quantum-inspired PGM classifiers, with byte-exact dataset reconstruction from public sources."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -36,7 +36,8 @@ authors = [
 maintainers = [{ name = "Carlo Cuccu", email = "carlocuccu@protonmail.com" }]
 
 # Floors, not pins: these are the oldest releases the code was run against.
-# The exact environment of the deposited measurements is requirements-repro.txt.
+# The exact environment of the deposited measurements is uv.lock, synced with
+# `uv sync --locked --group dev --extra estimators`.
 #
 # torch is deliberately NOT here. The harness imports it lazily, so preparing
 # the datasets, running the self-test, redrawing the figure and most of the
@@ -53,7 +54,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# The three estimators, and therefore Components A and B and the notebook.
+# The three estimators, and therefore `pgm select` and Components A and B.
 estimators = ["torch>=1.13"]
 
 [project.urls]
@@ -62,13 +63,6 @@ Issues = "https://github.com/carlocuccu/pgm-classifier-computational-complexity/
 
 # ---------------------------------------------------------------------------
 # Dependency groups
-#
-# The environment the deposited measurements were taken in is NOT here. It is
-# an archive of a 2022 stack -- torch 1.13.1 stops at CPython 3.11 -- and a pin
-# that old, placed in the resolution, propagates to every other environment and
-# makes the lockfile uninstallable on a current interpreter. It lives in
-# requirements-repro.txt, outside the lock, which is the honest place for
-# something that is a record rather than a build target.
 # ---------------------------------------------------------------------------
 [dependency-groups]
 
@@ -77,8 +71,6 @@ dev = [
     "ruff>=0.6",
     "pre-commit>=3.7",
 ]
-
-notebook = ["jupyter>=1.0"]
 
 [project.scripts]
 pgm = "pgm_complexity.cli:main"

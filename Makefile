@@ -15,9 +15,8 @@
 # Each of these is `pgm <something>`; `uv run pgm --help` lists the
 # command line in full.
 #
-# The environment the reported measurements were taken in is not any of these:
-# it is requirements-repro.txt, on CPython 3.10, and is a record rather than a
-# build target. Its header says how to recreate it.
+# The reported measurements were taken in the locked environment of
+# `make estimators`; docs/environment.md describes the machine.
 
 .DEFAULT_GOAL := help
 .PHONY: help setup estimators lock lint format test data check selftest repro \
@@ -65,13 +64,18 @@ figure:
 numbers:
 	$(UV) run pgm paper numbers
 
-# The full reproduction, in the order the paper needs it. Component B sweeps
-# the Skin Segmentation dataset up to N = 8000 and takes hours on one core:
-# this is the long path, not a smoke test. `make test` is the quick one.
+# The full reproduction, in the order of the deposited run. It overwrites the
+# files in results_benchmark/, results_selection/ and results_diagnostics/
+# (`git status` shows what changed). Component B sweeps the Skin Segmentation
+# dataset up to N = 8000 and takes hours on one core; Component A and the POVM
+# diagnostics reach about 200 GB of memory (car and ecoli at c = 9). This is
+# the long path, not a smoke test. `make test` is the quick one.
 repro: estimators data
+	$(UV) run --extra estimators pgm diag povm --mem-limit-gb 500
 	$(UV) run --extra estimators pgm select
-	$(UV) run --extra estimators pgm bench a --reps 5
+	$(UV) run pgm paper tables > results_selection/tables.tex
 	$(UV) run --extra estimators pgm bench b --reps 3
+	$(UV) run --extra estimators pgm bench a --reps 5 --mem-limit-gb 500
 	$(UV) run pgm paper numbers
 
 clean:

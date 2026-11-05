@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # The repository root, four levels up from this file:
 #   <root>/src/pgm_complexity/__init__.py

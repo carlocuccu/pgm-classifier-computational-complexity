@@ -201,12 +201,17 @@ def component_b_report(b, b_meta) -> None:
         )
         print(f"  c = {c}, N = {n_last:.0f}: {ratios}")
 
-    same = all(
-        len({r["accuracy"] for r in _cells(b, c) if r["N"] == n}) == 1
+    differing = sorted(
+        (c, int(float(n)))
         for c in infos
         for n in {r["N"] for r in _cells(b, c)}
+        if len({r["accuracy"] for r in _cells(b, c) if r["N"] == n}) > 1
     )
-    print(f"Accuracies identical across the classifiers at every c and N: {same}")
+    if differing:
+        cells = ", ".join(f"c = {c}, N = {n}" for c, n in differing)
+        print(f"Accuracies identical across the classifiers except at: {cells}")
+    else:
+        print("Accuracies identical across the classifiers at every c and N")
 
     env = b_meta["env"]
     print(

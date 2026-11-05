@@ -75,6 +75,18 @@ def cost_proxies(N, d, dsym, l, r=None, n_max=None):
     }
 
 
+def rcpgm_fit_peak_bytes(n, n_max, l, dsym):
+    """Peak memory of an Rc-PGM fit, in bytes (float64): the densities of
+    the largest class (n_max d_sym^2), the reduced vectors (n d_sym), and the
+    l centroids, the l operators and about five d_sym x d_sym transients.
+
+    Used to decide which configurations exceed --mem-limit-gb. It matches
+    the peaks measured in the runs of v1.1.0-rc1 within a few per cent
+    (car at c = 9: about 196 GB; ecoli at c = 9: about 132 GB).
+    """
+    return 8 * ((n_max + 2 * l + 5) * dsym**2 + n * dsym)
+
+
 def _quadratic_threshold(b, q):
     """Positive root of N^2 - b N - q = 0, q > 0: N^2 > b N + q iff N > root."""
     return (b + sqrt(b * b + 4 * q)) / 2

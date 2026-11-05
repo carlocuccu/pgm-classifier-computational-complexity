@@ -2,10 +2,9 @@
 
 Timings and memory figures are only comparable across runs that share the same
 machine, the same thread pinning and the same library versions. This is the
-machine the runs deposited in `results_benchmark/` were measured on; the
-machine-readable half of it is the `[env]` block of
-`results_benchmark/componentA_meta.json` and `componentB_meta.json`, written by
-the harness at start-up.
+machine the runs deposited in `results_benchmark/`, `results_selection/` and
+`results_diagnostics/` were measured on; the machine-readable half of it is the
+`env` block of every `*_meta.json`, written at start-up.
 
 ## Machine
 
@@ -21,30 +20,31 @@ the harness at start-up.
 
 | item | value |
 |---|---|
-| Python | 3.10.12 |
-| NumPy | 1.26.4 |
-| SciPy | 1.14.1 |
-| pandas | not recorded per-version by the harness |
-| scikit-learn | not recorded per-version by the harness |
-| PyTorch | 1.13.1+cu117, `torch.float64`, CPU only |
-| BLAS backend (`numpy.show_config()`) | Intel MKL 2020.0.0 for PyTorch; OpenBLAS 0.3.23 for NumPy and SciPy |
+| Python | 3.14.7 |
+| NumPy | 2.5.2 |
+| PyTorch | 2.13.0+cu130, `torch.float64`, CPU only |
+| other packages | as resolved in `uv.lock` at tag `v1.1.0-rc1`, installed with `uv sync --locked --group dev --extra estimators` |
+| BLAS backend | not recorded by the harness |
 
-The three versions that the runs did record — Python, NumPy and PyTorch — are
-pinned in `requirements-repro.txt`, together with SciPy; its header says how to
-recreate the environment. The two that were not recorded are absent rather than
-invented: a pin nobody measured is worse than an honest gap.
+The three versions in the table are the ones every run recorded. The rest of
+the environment is the lockfile itself. The runs of v1.0.x were measured in an
+older stack (Python 3.10.12, NumPy 1.26.4, SciPy 1.14.1, PyTorch 1.13.1),
+recorded in `requirements-repro.txt` at tag `v1.0.1`.
 
 ## Run parameters
 
 | item | value |
 |---|---|
+| code | tag `v1.1.0-rc1`, commit `881e4c597f6d121202363ae0dbfd4611b4f21952` |
 | `--threads` | 1 (BLAS and OpenMP pinned before numpy and torch are imported) |
+| `pgm select` | stratified 5-fold CV on the training set, 10 repetitions, one-standard-error rule, `c = 1 … 9` |
 | `--reps`, Component A | 5 timed repetitions after one warm-up |
 | `--reps`, Component B | 3 timed repetitions after one warm-up |
-| `--sweep` / `--nmax`, Component B | N ∈ {250, 500, 1000, 1750, 3000, 5000, 8000}, test set 2000 |
+| `--sweep` / `--copies`, Component B | N ∈ {25, 50, 100, 250, 500, 1000, 1750, 3000, 5000, 8000}, c ∈ {2, …, 7}, test set 2000 |
 | `--seed` | 42 |
-| Date of the run | Component A: 2026-08-24 · Component B: 2026-08-25 |
-| Truncation | `BASE_TOL = 1e-6` with `HARMONIZE_TOL = True` |
+| `--mem-limit-gb` | 500 (no configuration skipped) |
+| Date of the runs | 2026-11-04 |
+| Truncation | `BASE_TOL = 1e-10` on the spectrum of `σ`, for the three estimators |
 
 ## Notes
 
@@ -53,5 +53,6 @@ invented: a pin nobody measured is worse than an honest gap.
 - the harness pins the BLAS/OpenMP thread count *before* importing
   numpy and torch. Running it under an externally set `OMP_NUM_THREADS` leaves
   that value in place, so record the effective one.
-- Table 7 contains no timing, only analytic conditions evaluated on integer
-  dataset descriptors; it is reproducible on any machine.
+- Table 7 contains no timing: the copy numbers, the accuracies, the ranks and
+  the analytic conditions reproduce on any machine (the run above gave the
+  same values, digit for digit, as one on a different machine and stack).

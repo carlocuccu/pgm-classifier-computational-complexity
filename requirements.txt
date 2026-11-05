@@ -1,5 +1,5 @@
 # Runtime dependencies for the classifiers, the benchmark harness and the
-# Table 7 notebook. Version floors are the oldest releases the code was run
+# copy-number selection. Version floors are the oldest releases the code was run
 # against; any newer 2.x / 1.x release is expected to work.
 numpy>=1.24
 scipy>=1.10
@@ -9,9 +9,6 @@ torch>=2.0
 tqdm>=4.65
 matplotlib>=3.7
 
-# scripts/fetch_datasets.py downloads the datasets with the standard library
-# and pandas; the two OpenML sources go through scikit-learn, already listed
-# above. No extra dependency is needed.
-
-# Optional, only needed to execute notebooks/table7.ipynb.
-jupyter>=1.0
+# `pgm data fetch` downloads the datasets with the standard library and
+# pandas; the two OpenML sources go through scikit-learn, already listed above.
+# No extra dependency is needed.

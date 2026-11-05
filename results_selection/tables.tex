@@ -1,0 +1,42 @@
+% pgm select: 5-fold CV x 10 repetitions on the training set, split seed 42, c = 1..9; rule: one-standard-error: smallest c with mean CV accuracy >= max - SE at the max, SE = std over repetitions / sqrt(repeats); threshold 1e-10 on the spectrum of sigma
+
+% Table 7: dataset & N & d & c & l & d_sym & r_Gc & CV acc. & test acc. & train time & train memory & prediction
+analcatdata dmft & 629 & 5 & 1 & 6 & 5 & 5 & 0.243 $\pm$ 0.007 & 0.171 & True & True & True \\
+balance-scale & 500 & 5 & 6 & 3 & 210 & 171 & 0.912 $\pm$ 0.001 & 0.896 & True & False & False \\
+car & 1381 & 7 & 9 & 4 & 5005 & 1288 & 0.805 $\pm$ 0.006 & 0.824 & False & False & False \\
+cleveland-nominal & 242 & 8 & 4 & 5 & 330 & 113 & 0.552 $\pm$ 0.008 & 0.541 & False & False & False \\
+cloud & 86 & 8 & 2 & 4 & 36 & 32 & 0.315 $\pm$ 0.015 & 0.318 & True & False & False \\
+confidence & 57 & 4 & 7 & 6 & 120 & 32 & 0.800 $\pm$ 0.019 & 0.933 & False & False & False \\
+ecoli & 261 & 8 & 9 & 5 & 11440 & 196 & 0.830 $\pm$ 0.007 & 0.894 & False & False & False \\
+haberman & 244 & 4 & 1 & 2 & 4 & 4 & 0.734 $\pm$ 0.000 & 0.742 & True & True & True \\
+iris & 120 & 5 & 9 & 3 & 715 & 61 & 0.978 $\pm$ 0.004 & 0.967 & False & False & False \\
+led7 & 2560 & 8 & 2 & 10 & 36 & 29 & 0.743 $\pm$ 0.002 & 0.747 & True & True & True \\
+new-thyroid & 172 & 6 & 9 & 3 & 2002 & 52 & 0.800 $\pm$ 0.007 & 0.767 & False & False & False \\
+
+% Appendix: mean CV accuracy at c = 1, 2, 3, 4, 5, 6, 7, 8, 9
+analcatdata dmft & \textbf{0.243} & 0.245 & 0.238 & 0.233 & 0.231 & 0.225 & 0.220 & 0.216 & 0.213 \\
+balance-scale & 0.880 & 0.910 & 0.912 & 0.912 & 0.912 & \textbf{0.912} & 0.912 & 0.913 & 0.913 \\
+car & 0.700 & 0.706 & 0.722 & 0.738 & 0.751 & 0.765 & 0.780 & 0.795 & \textbf{0.805} \\
+cleveland-nominal & 0.541 & 0.541 & 0.543 & \textbf{0.552} & 0.550 & 0.548 & 0.546 & 0.540 & 0.541 \\
+cloud & 0.313 & \textbf{0.315} & 0.315 & 0.317 & 0.317 & 0.318 & 0.315 & 0.317 & 0.315 \\
+confidence & 0.598 & 0.731 & 0.777 & 0.794 & 0.798 & 0.798 & \textbf{0.800} & 0.805 & 0.803 \\
+ecoli & 0.554 & 0.658 & 0.721 & 0.756 & 0.785 & 0.798 & 0.814 & 0.823 & \textbf{0.830} \\
+haberman & \textbf{0.734} & 0.730 & 0.728 & 0.724 & 0.723 & 0.724 & 0.724 & 0.726 & 0.727 \\
+iris & 0.799 & 0.904 & 0.951 & 0.964 & 0.967 & 0.972 & 0.975 & 0.976 & \textbf{0.978} \\
+led7 & 0.734 & \textbf{0.743} & 0.740 & 0.736 & 0.733 & 0.731 & 0.731 & 0.730 & 0.729 \\
+new-thyroid & 0.704 & 0.727 & 0.737 & 0.747 & 0.764 & 0.769 & 0.778 & 0.785 & \textbf{0.800} \\
+
+% Appendix: conditions at c = 1, 2, 3, 4, 5, 6, 7, 8, 9 (training time, training memory, prediction)
+analcatdata dmft & \textbf{TTT} & TTT & TFT & TFT & TFF & TFF & TFF & FFF & FFF \\
+balance-scale & TTT & TTT & TFT & TFT & TFT & \textbf{TFF} & TFF & FFF & FFF \\
+car & TTT & TTT & TFT & TFT & TFF & FFF & FFF & FFF & \textbf{FFF} \\
+cleveland-nominal & TTT & TFT & TFF & \textbf{FFF} & FFF & FFF & FFF & FFF & FFF \\
+cloud & TTT & \textbf{TFF} & FFF & FFF & FFF & FFF & FFF & FFF & FFF \\
+confidence & TTT & TFT & TFF & FFF & FFF & FFF & \textbf{FFF} & FFF & FFF \\
+ecoli & TTT & TFT & TFF & FFF & FFF & FFF & FFF & FFF & \textbf{FFF} \\
+haberman & \textbf{TTT} & TTT & TFT & TFT & TFT & TFF & TFF & TFF & FFF \\
+iris & TTT & TFT & TFT & TFF & FFF & FFF & FFF & FFF & \textbf{FFF} \\
+led7 & TTT & \textbf{TTT} & TFT & TFF & TFF & FFF & FFF & FFF & FFF \\
+new-thyroid & TTT & TFT & TFF & FFF & FFF & FFF & FFF & FFF & \textbf{FFF} \\
+
+% selected c at the last value of the grid: car, ecoli, iris, new-thyroid

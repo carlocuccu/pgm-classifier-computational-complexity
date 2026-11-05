@@ -233,7 +233,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="also run the explicit c-PGM where d_enc^c is small",
     )
     bench.add_argument("--cpgm-dim-limit", type=int, default=4100)
-    bench.add_argument("--mem-limit-gb", type=float, default=8.0)
+    bench.add_argument(
+        "--mem-limit-gb",
+        type=float,
+        default=8.0,
+        help="Component A: skip, with [skip], a dataset whose estimated Rc-PGM "
+        "peak exceeds this many GB; it does not cap the memory used. "
+        "The deposited run used 500",
+    )
     bench.add_argument("--nmax", type=int, default=8000)
     bench.add_argument("--sweep", nargs="+", type=int, default=None)
     bench.add_argument(
@@ -281,7 +288,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--copies", nargs="+", type=int, default=list(range(1, 10)), metavar="C"
     )
     povm.add_argument("--seed", type=int, default=42)
-    povm.add_argument("--mem-limit-gb", type=float, default=8.0)
+    povm.add_argument(
+        "--mem-limit-gb",
+        type=float,
+        default=8.0,
+        help="skip, with [skip], a (dataset, c) whose estimated peak exceeds "
+        "this many GB; it does not cap the memory used. The deposited run used 500",
+    )
     povm.add_argument("--outdir", default=None, help="default: results_diagnostics/")
     povm.set_defaults(func=_diag_povm)
 

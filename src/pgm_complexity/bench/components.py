@@ -22,13 +22,24 @@ from pgm_complexity.bench.measure import measure
 from pgm_complexity.config import DEFAULT_SWEEP, SKIN_COPIES, SKIN_TEST
 from pgm_complexity.crossovers import crossover_table, format_table
 from pgm_complexity.figures import plot_B
-from pgm_complexity.thresholds import dsym_of, thresholds
+from pgm_complexity.thresholds import dsym_of, rcpgm_fit_peak_bytes, thresholds
 
 
 def _outdir(args) -> Path:
     out = Path(args.outdir).resolve() if getattr(args, "outdir", None) else OUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     return out
+
+
+def _relative(path: Path) -> str:
+    """A path relative to the repository root when it lies inside it, so that
+    the metadata of a run does not record the machine it ran on."""
+    from pgm_complexity import ROOT
+
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def _copy_numbers(args):
@@ -65,10 +76,9 @@ def component_A(args):
         info = thresholds(len(tr), X.shape[1], c, len(np.unique(y)))
         ds = info["dsym"]
 
-        # Calibrated Rc-PGM fit-peak estimate: 2l persistent matrices
-        # (centroids + PGM operators) plus ~5 dsym^2 transients (sigma, the
-        # eigh workspace, the sandwich temporaries), in float64.
-        est_bytes = (2 * len(np.unique(y)) + 5) * ds * ds * 8
+        # Rc-PGM fit peak: the densities of the largest class dominate.
+        n_max = int(np.max(np.unique(ytr, return_counts=True)[1]))
+        est_bytes = rcpgm_fit_peak_bytes(len(tr), n_max, len(np.unique(y)), ds)
         if est_bytes > args.mem_limit_gb * 1e9:
             print(
                 f"[skip] {name}: estimated Rc-PGM footprint "
@@ -137,7 +147,7 @@ def component_A(args):
         json.dumps(
             {
                 "env": env_info(),
-                "copy_numbers_from": str(selection_path),
+                "copy_numbers_from": _relative(selection_path),
                 "meta": meta,
             },
             indent=2,

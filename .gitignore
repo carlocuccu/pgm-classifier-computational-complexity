@@ -9,10 +9,15 @@ venv/
 # The self-test output is not a reported result.
 results_benchmark/selftest.csv
 
-# The rest of results_benchmark/ is NOT ignored: it holds the run reported in
-# the paper. Re-running the harness overwrites it in place -- check `git status` before
-# committing, and keep the deposited run unless you mean to replace it.
+# The rest of results_benchmark/, and results_selection/ and
+# results_diagnostics/, are NOT ignored: they hold the runs reported in the
+# paper. Re-running the harness overwrites them in place -- check `git status`
+# before committing, and keep the deposited runs unless you mean to replace
+# them. A run written elsewhere with --outdir is not ignored either.
 
-# The data is not carried in the repository: `python scripts/fetch_datasets.py`
-# downloads it and rebuilds it, byte for byte, from its public sources.
+# Console logs of a run: the numbers are in the CSV and *_meta.json files.
+logs/
+
+# The data is not carried in the repository: `pgm data fetch` downloads it and
+# rebuilds it, byte for byte, from its public sources.
 datasets/

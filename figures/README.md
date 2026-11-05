@@ -68,17 +68,18 @@ read at `d = p + 1`.
 
 The manuscript also contains a figure that is not analytic: the crossover sweep
 on Skin Segmentation. It is data-derived and therefore not kept here — the
-benchmark harness writes it, as PNG and as PDF, next to the measurements it
-plots:
+benchmark harness writes it, one figure per copy number, as PNG and as PDF,
+next to the measurements it plots:
 
 ```bash
 pgm bench b --reps 3
-# -> results_benchmark/componentB_crossover.{png,pdf}
+# -> results_benchmark/componentB_crossover_c{2..7}.{png,pdf}
 ```
 
-Its three panels compare the k-PGM and the Rc-PGM on training time, stored
-model memory and prediction time, each against the threshold of the condition
-that governs it. Note that the stored model is bounded by the *prediction*
+Its three panels compare the dense k-PGM, the k-PGM from explicit features and
+the Rc-PGM on training time, stored model memory and prediction time, each
+against the threshold of the condition that governs it, with the empirical
+crossover of the dense k-PGM and the Rc-PGM. Note that the stored model is bounded by the *prediction*
 condition `N > l·d_sym²/(d + r_{G^c})`, not by the training-memory one: the
 memory a fitted k-PGM retains is the `O(N(d + r_{G^c}))` term that drives its
 prediction cost.
