@@ -76,6 +76,14 @@ pgm bench b --reps 3
 # -> results_benchmark/componentB_crossover_c{2..7}.{png,pdf}
 ```
 
+The same panels for every copy number on one page, one row per `c`, are
+redrawn from the deposited measurements without running the sweep again:
+
+```bash
+pgm bench replot --combined
+# -> results_benchmark/componentB_crossover_all.{png,pdf}
+```
+
 Its three panels compare the dense k-PGM, the k-PGM from explicit features and
 the Rc-PGM on training time, stored model memory and prediction time, each
 against the threshold of the condition that governs it, with the empirical

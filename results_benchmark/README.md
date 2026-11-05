@@ -15,6 +15,7 @@ deposited with the code, and this is where they are.
 | `componentB_meta.json` | environment, the copy numbers, the thresholds of each `c` with the rank retained at the largest `N`, the sweep grid and the test-set size |
 | `componentB_crossovers.csv` | for each `c` and quantity, the threshold, the empirical crossover of the dense k-PGM and the Rc-PGM, and their ratio |
 | `componentB_crossover_c{c}.png`, `.pdf` | one figure per copy number, as written by the harness |
+| `componentB_crossover_all.png`, `.pdf` | every copy number on one page, one row per `c`; drawn by `pgm bench replot --combined` from `componentB.csv`, not by the harness |
 
 ## The other two directories
 

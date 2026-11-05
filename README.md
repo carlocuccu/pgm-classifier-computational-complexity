@@ -68,7 +68,7 @@ checks and the harness self-test run without it.
 |---|---|---|
 | **Table 7** and the copy-number sweep of the appendix (copy number chosen by cross-validation, Rc-PGM advantage conditions at every `c`) | `pgm select`<br>`pgm paper tables > results_selection/tables.tex` | `results_selection/selection.csv`, `selection_sweep.csv`, `selection_meta.json`; the LaTeX rows of Table 7 and of the appendix tables |
 | **Section "Some empirical evidence"**, per-dataset timings, at the copy numbers chosen by `pgm select` | `pgm select`<br>`pgm bench a --reps 5 --mem-limit-gb 500` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
-| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation at `c = 2 … 7`, for the dense k-PGM, the k-PGM from explicit features and the Rc-PGM | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossovers.csv` (empirical crossover, threshold and their ratio, per `c` and quantity), `componentB_crossover_c{c}.png` |
+| **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation at `c = 2 … 7`, for the dense k-PGM, the k-PGM from explicit features and the Rc-PGM | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossovers.csv` (empirical crossover, threshold and their ratio, per `c` and quantity), `componentB_crossover_c{c}.png`; `pgm bench replot --combined` adds `componentB_crossover_all.pdf`, every `c` on one page |
 | **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
 | **Tables 7 and 8, Figure 4, the appendices** | the runs as reported | already in `results_benchmark/`, `results_selection/` and `results_diagnostics/`; `pgm paper numbers` and `pgm paper tables` re-derive every figure and table row quoted in the text |
 | POVM residuals of the truncated measurement (completeness, positivity, retained rank) | `pgm diag povm --mem-limit-gb 500` | `results_diagnostics/povm.csv`, `povm_meta.json` |
@@ -81,6 +81,9 @@ nothing.
 `pgm bench … --outdir DIR` writes a run to `DIR` instead of `results_benchmark/`,
 leaving the deposited run untouched; `pgm paper numbers --results DIR` and
 `pgm bench replot --outdir DIR` read it back.
+`pgm bench replot --combined` draws only the one-page figure with every copy
+number, `componentB_crossover_all.{png,pdf}`, and leaves the per-`c` figures
+as they are.
 
 ## Layout
 

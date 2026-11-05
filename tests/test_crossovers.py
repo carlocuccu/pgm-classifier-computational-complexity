@@ -142,6 +142,13 @@ def test_component_b_sweeps_every_copy_number_with_three_classifiers(
     for c in (2, 3):
         assert (tmp_path / f"componentB_crossover_c{c}.png").exists()
 
+    # The one-page figure is redrawn from what was written, one row per c.
+    from pgm_complexity.figures import replot_B
+
+    assert replot_B(tmp_path, combined=True) == 0
+    assert (tmp_path / "componentB_crossover_all.pdf").exists()
+    assert (tmp_path / "componentB_crossover_all.png").exists()
+
 
 @pytest.mark.torch
 def test_component_a_reads_the_copy_numbers_of_pgm_select(synthetic, tmp_path):

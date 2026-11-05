@@ -82,7 +82,7 @@ def _bench(args) -> int:
     if args.what == "replot":
         from pgm_complexity.figures import replot_B
 
-        return replot_B(outdir)
+        return replot_B(outdir, combined=args.combined)
 
     if args.what == "selftest":
         from pgm_complexity.bench.selftest import selftest
@@ -242,6 +242,12 @@ def build_parser() -> argparse.ArgumentParser:
         "The deposited run used 500",
     )
     bench.add_argument("--nmax", type=int, default=8000)
+    bench.add_argument(
+        "--combined",
+        action="store_true",
+        help="replot: draw only the one-page figure with every copy number "
+        "(componentB_crossover_all), leaving the per-c figures as they are",
+    )
     bench.add_argument("--sweep", nargs="+", type=int, default=None)
     bench.add_argument(
         "--copies",
