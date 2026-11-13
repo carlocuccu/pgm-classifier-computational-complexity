@@ -1,10 +1,16 @@
 # Figures
 
-The three *analytic* figures of the manuscript, as PNG and as PDF. They are plots of the
+The three *analytic* figures of the manuscript, as PDF. They are plots of the
 closed-form complexity expressions derived in the paper — no data and no
-measurement enter them — and were produced with Wolfram Mathematica. The exact
-expressions are listed below, so that each surface can be re-derived
-independently.
+measurement enter them — and are drawn by `make_figures.py`, with matplotlib:
+
+```bash
+uv run python figures/make_figures.py
+# -> figures/pgm_vs_kpgm.pdf, reduced.pdf, pgm_vs_kpgm_vs_rcpgm.pdf
+```
+
+The exact expressions are listed below, so that each surface can also be
+re-derived independently.
 
 Throughout, `N` is the training-set size, `d` the feature dimension, `c` the
 number of tensor copies, and
@@ -13,31 +19,38 @@ number of tensor copies, and
 d_sym = binomial(d + c - 1, c)
 ```
 
-is the dimension of the symmetric subspace.
+is the dimension of the symmetric subspace. Each classifier keeps one colour in
+the three figures: pink for the k-PGM, blue for the c-PGM and green for the
+Rc-PGM. The legends state the conditions only.
 
 ## `pgm_vs_kpgm` — Figure 1
 
-Training-memory comparison between the c-PGM and the k-PGM, over
+Training-memory condition of the c-PGM against the k-PGM, over
 `d ∈ [1, 50]`, `c ∈ [2, 6]`, `N ∈ [10^5, 10^6]`.
 
-| region | inequality | more memory-efficient |
+| region | colour | inequality |
 |---|---|---|
-| red | `N < d^(2c)` | k-PGM |
-| blue | `N > d^(2c)` | c-PGM |
+| below the surface | pink (k-PGM) | `N < d^(2c)` |
+| above the surface | blue (c-PGM) | `N > d^(2c)` |
 
-The c-PGM stores `l` centroids of size `d^c × d^c`, hence the `d^(2c)` term;
-the k-PGM stores the `N × N` Gram matrix.
+The c-PGM stores the `N` density operators of size `d^c × d^c` under the batched
+convention of the paper, hence the `d^(2c)` term; the dense k-PGM stores the
+`N × N` Gram matrix. `N > d^(2c)` is a sufficient condition: where it holds, the
+batched c-PGM needs less training memory than the dense k-PGM; where it does
+not, the comparison depends on the implementation (a streaming c-PGM needs less
+memory already for `N > sqrt(l) d^c`).
 
 ## `reduced` — Figure 2
 
 Growth of the tensor-space dimension `d^c` against the symmetric-subspace
 dimension `d_sym`, over `d ∈ [2, 20]` and `c ∈ [2, 6]`, on a base-10
-logarithmic vertical axis.
+logarithmic vertical axis. `d_sym` is continued to real `c` through the Gamma
+function.
 
-| surface | expression |
-|---|---|
-| red | `d^c` |
-| blue | `binomial(d + c - 1, c)` |
+| surface | colour | expression |
+|---|---|---|
+| upper | blue (c-PGM) | `d^c` |
+| lower | green (Rc-PGM) | `binomial(d + c - 1, c)` |
 
 The gap between the two surfaces is the reduction the Rc-PGM exploits: every
 occurrence of `d^(2c)` in the c-PGM complexities becomes `d_sym^2`.
@@ -46,15 +59,19 @@ occurrence of `d^(2c)` in the c-PGM complexities becomes `d_sym^2`.
 
 The same comparison as Figure 1, with the Rc-PGM added, over the same ranges.
 
-| region | inequality | most memory-efficient |
+| region | colour | inequality |
 |---|---|---|
-| red | `N < d_sym^2` | k-PGM |
-| green | `d_sym^2 < N < d^(2c)` | Rc-PGM |
-| blue | `N > d^(2c)` | c-PGM |
+| lowest | pink (k-PGM) | `N < d_sym^2` |
+| middle | green (Rc-PGM) | `d_sym^2 < N < d^(2c)` |
+| highest | blue (c-PGM) | `N > d^(2c)` |
 
-The green volume is the regime opened up by the symmetric-subspace reduction:
-there the Rc-PGM already overtakes the k-PGM in training memory, while the
-unreduced c-PGM does not.
+The regions are those of the two sufficient conditions `N > d_sym^2` and
+`N > d^(2c)`, which compare the batched Rc-PGM and c-PGM with the dense k-PGM.
+In the middle region the condition holds for the Rc-PGM, thanks to the
+dimensionality reduction, but not for the unreduced c-PGM; in the lowest region
+neither condition guarantees that the Rc-PGM or the c-PGM needs less training
+memory than the dense k-PGM. A k-PGM that exploits the rank of the Gram matrix
+is not described by the figure.
 
 ## Note on the encoded dimension
 

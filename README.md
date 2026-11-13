@@ -69,7 +69,7 @@ checks and the harness self-test run without it.
 | **Table 7** and the copy-number sweep of the appendix (copy number chosen by cross-validation, Rc-PGM advantage conditions at every `c`) | `pgm select`<br>`pgm paper tables > results_selection/tables.tex` | `results_selection/selection.csv`, `selection_sweep.csv`, `selection_meta.json`; the LaTeX rows of Table 7 and of the appendix tables |
 | **Section "Some empirical evidence"**, per-dataset timings, at the copy numbers chosen by `pgm select` | `pgm select`<br>`pgm bench a --reps 5 --mem-limit-gb 500` | `results_benchmark/componentA.csv`, `componentA_meta.json` |
 | **Section "Some empirical evidence"**, crossover sweep on Skin Segmentation at `c = 2 … 7`, for the dense k-PGM, the k-PGM from explicit features and the Rc-PGM | `pgm data fetch --only-skin`<br>`pgm bench b --reps 3` | `results_benchmark/componentB.csv`, `componentB_meta.json`, `componentB_crossovers.csv` (empirical crossover, threshold and their ratio, per `c` and quantity), `componentB_crossover_c{c}.png`; `pgm bench replot --combined` adds `componentB_crossover_all.pdf`, every `c` on one page |
-| **Figures 1–3** | analytic surfaces, not recomputed here | `figures/` (see `figures/README.md` for the plotted expressions) |
+| **Figures 1–3** | `uv run python figures/make_figures.py` | `figures/pgm_vs_kpgm.pdf`, `reduced.pdf`, `pgm_vs_kpgm_vs_rcpgm.pdf` (see `figures/README.md` for the plotted expressions) |
 | **Tables 7 and 8, Figure 4, the appendices** | the runs as reported | already in `results_benchmark/`, `results_selection/` and `results_diagnostics/`; `pgm paper numbers` and `pgm paper tables` re-derive every figure and table row quoted in the text |
 | POVM residuals of the truncated measurement (completeness, positivity, retained rank) | `pgm diag povm --mem-limit-gb 500` | `results_diagnostics/povm.csv`, `povm_meta.json` |
 
@@ -109,7 +109,7 @@ pgm-repo/
 ├── results_benchmark/        the measurements reported in the paper, as produced
 ├── results_selection/        the copy-number selection behind Table 7
 ├── results_diagnostics/      the residuals of the truncated measurement
-├── figures/                  the three figures of the paper
+├── figures/                  Figures 1–3 of the paper and make_figures.py, which draws them
 └── docs/
     ├── datasets.md           sources, licences and transformations of the data
     └── environment.md        the machine the deposited runs were measured on
