@@ -44,9 +44,11 @@ pgm bench a --reps 5 --mem-limit-gb 500
 ```
 
 No configuration was skipped. The release `v1.1.0` changes no code that these
-runs exercised; it only deposits them, and makes the estimate behind
+runs exercised. Besides depositing them, it makes the estimate behind
 `--mem-limit-gb` follow the per-class peak of the Rc-PGM, which the runs
-measured.
+measured, adds the one-page figure of Component B with every copy number
+(`pgm bench replot --combined`), and adds `figures/make_figures.py`, which draws
+Figures 1–3.
 
 The runs of v1.0.x (threshold `1e-6` on the spectrum of `G^c`, copy numbers
 chosen on the test set) are reproducible from tag `v1.0.1` and from its Zenodo
