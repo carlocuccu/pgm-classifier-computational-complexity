@@ -24,6 +24,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import to_rgba
 from matplotlib.patches import Patch
 from matplotlib.ticker import FixedFormatter, FixedLocator
 
@@ -138,10 +139,11 @@ def fig_reduced():
             C,
             D,
             values,
-            color=colour,
-            alpha=alpha,
-            edgecolor=(0, 0, 0, 0.12),
-            linewidth=0.1,
+            # The transparency goes into the face colour, not into alpha=, which
+            # would also override the transparency of the edges.
+            color=to_rgba(colour, alpha),
+            edgecolor=EDGE,
+            linewidth=0.08,
             rcount=30,
             ccount=30,
             shade=False,
